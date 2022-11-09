@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
-xdg = "^2.1"
+xdg = "2.4.1"
 nanoid = "0.4.0"
 vcard_parser = { path = "/home/lm/code/vcard_parser" }
+regex = "1.7.0"
+execute = "0.2.11"

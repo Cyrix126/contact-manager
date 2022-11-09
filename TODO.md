@@ -11,17 +11,12 @@
 4/ trouver les contact possédant une valeur de champ défini.
 cm find FN (of) TEL XXXXXXXXX
 cherche le TEL dans tous les contacts, affiche FN des contacts trouvé.
-
 implémentation:
-utilisation de la librairie vcard_parser:
-mettre tout les vcard en vec!
+utilisation de la librairie vcard_parser: OK
 
-for vcard in fs::read_dir(dir) 
-{
- 
-}
 
-let all = vec![]
+4.1/ faire appel à certains champs -X
+
 
 
 5/ modifier un champ par commande
