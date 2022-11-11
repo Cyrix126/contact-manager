@@ -1,7 +1,7 @@
 # Étapes:
 
 
-1/command line: utilisable par des programmes/scripts
+1/command line: utilisable par des programmes/scripts OK
 1.1: créer/supprimer un contact
 1.2: éditer un contact
 1.3: recherche de contact par champ.
