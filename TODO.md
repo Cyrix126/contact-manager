@@ -4,22 +4,19 @@
 
 / suprimer un contact
 
-2/ éditer une fiche de contact
+2/ éditer une fiche de contact OK
+éditer de manière plus simple sans avoir à préciser le type de field dans la valeur
 
 3/ afficher la liste des contact
 
-4/ trouver les contact possédant une valeur de champ défini.
-cm find FN (of) TEL XXXXXXXXX
-cherche le TEL dans tous les contacts, affiche FN des contacts trouvé.
-implémentation:
-utilisation de la librairie vcard_parser: OK
+4/ trouver les contact possédant une valeur de champ défini. OK
 
 
-4.1/ faire appel à certains champs -X
+4.1/ faire appel à certains champs -X OK
 
 
 
-5/ modifier un champ par commande
+5/ ajouter/modifier un champ par commande
 
 6/ afficher les informations d'un contact élégamment.
 
