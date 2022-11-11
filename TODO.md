@@ -1,32 +1,26 @@
 # Étapes:
 
-1/ créer un contact  (new, del)
 
-/ suprimer un contact
+1/command line: utilisable par des programmes/scripts
+1.1: créer/supprimer un contact
+1.2: éditer un contact
+1.3: recherche de contact par champ.
+1.4: utilisation emplacement norme XDG
+1.5: carnet à liens symbolique.
 
-2/ éditer une fiche de contact OK
-éditer de manière plus simple sans avoir à préciser le type de field dans la valeur
+2/interactive command line: utilisation par l'utilisateur
+2.1: éditer de manière plus simple
+2.2: afficher des comptes rendu et erreurs.
+2.3: recherche moins radicale
+2.4: interaction pour choisir plusieurs résultats.
+2.5: interaction pour éditer les champs
+2.6: afficher un contact
+2.7: affichage de liste
 
-3/ afficher la liste des contact
-
-4/ trouver les contact possédant une valeur de champ défini. OK
-
-
-4.1/ faire appel à certains champs -X OK
+3/terminal user interface: utilisable sans commande
 
 
 
-5/ ajouter/modifier un champ par commande
-
-6/ afficher les informations d'un contact élégamment.
-
-7/ gérer plusieurs carnets d'adresse
-
-# Implémentations normes
-
-- utilisation de la norme [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) OK
-
-- tous les contacts sont dans un seul dossier. Le carnets d'adresse possède un lien symbolique vers le contact.
 
 # Intégration:
 

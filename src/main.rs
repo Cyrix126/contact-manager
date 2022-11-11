@@ -1,8 +1,6 @@
-use std::fs::{self, read_to_string, DirEntry};
-use std::io;
+use std::fs::{self, read_to_string};
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::exit;
 
 use execute::Execute;
 use regex::Regex;
@@ -10,10 +8,10 @@ use std::process::{Command, Stdio};
 use vcard_parser::parse_to_vcards_without_errors;
 use vcard_parser::vcard::property::types::PropertyType;
 use vcard_parser::vcard::property::Property;
-use vcard_parser::vcard::values::Value;
+//use vcard_parser::vcard::values::Value;
 use vcard_parser::vcard::Vcard;
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 
 extern crate xdg;
 
@@ -34,6 +32,10 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     #[command(arg_required_else_help = true)]
+    New {
+        #[arg(value_name = "FN VALUE", required = true)]
+        value_fn: String,
+    },
     Find {
         #[arg(value_name = "SHOW FIELD", required = true, value_enum)]
         property_show: PropertyType,
@@ -61,10 +63,33 @@ enum Commands {
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
     },
+    Delete {
+        #[arg(value_name = "FIND FIELD", required = true, value_enum)]
+        property_find: PropertyType,
+        #[arg(value_name = "VALUE", required = true)]
+        property_value: String,
+    
+    },
 }
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
 enum PropertyTypeX {
     Motpoli,
+    Test,
+}
+
+fn new(path: &Path, value_fn: String) {
+    let all = read_contacts(&path);
+    let property_find = PropertyType::Fn;
+    let value = value_fn.clone();
+
+    if let Some(_) = find_vcard(all, property_find, value_fn) {
+        println!("Le contact {} existe déjà.", value)
+    } else {
+        let vcard = Vcard::from_fullname(&value).unwrap();
+        let data = vcard.to_string();
+        let file = find_file_vcard(&path, &vcard);
+        fs::write(file, data).expect("Unable to write file.");
+    }
 }
 
 fn read_contacts(path: &Path) -> String {
@@ -90,7 +115,7 @@ fn find_vcard(all: String, property_find: PropertyType, value_find: String) -> O
     for vcard in vcards {
         let properties = vcard.get_properties_by_type(&property_find);
         if !properties.is_empty() {
-            let mut property = String::from("");
+            let property: String;
 
             if property_find != PropertyType::Tel {
                 property = properties[0].get_value().to_string();
@@ -157,10 +182,26 @@ fn edit(
             vcard
                 .update_property(property.get_uuid(), &property_edit_value)
                 .expect("Unable to update property.");
-            let data = vcard.to_string();
-            let file = find_file_vcard(&dir_contacts, &vcard);
-            fs::write(file, data).expect("Unable to write file.");
+        } else {
+            vcard
+                .add_property(&property_edit_value)
+                .expect("Unable to add property.");
         }
+
+        let file = find_file_vcard(&dir_contacts, &vcard);
+        fs::write(file, vcard.to_string()).expect("Unable to write file.");
+    }
+}
+
+fn delete(
+    dir_contacts: &Path,
+    property_find: PropertyType,
+    value_find: String,
+) {
+    let all = read_contacts(&dir_contacts);
+    if let Some(vcard) = find_vcard(all, property_find, value_find) {
+    let file = find_file_vcard(&dir_contacts, &vcard);
+    fs::remove_file(file).expect("File delete failed");
     }
 }
 
@@ -254,5 +295,7 @@ fn main() {
             property_find,
             property_value,
         ),
+        Commands::New { value_fn, .. } => new(dir_contacts.as_path(), value_fn),
+        Commands::Delete { property_find, property_value, .. } => delete(dir_contacts.as_path(), property_find, property_value, ),
     };
 }
