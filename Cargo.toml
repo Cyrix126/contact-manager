@@ -12,3 +12,4 @@ nanoid = "0.4.0"
 vcard_parser = { path = "/home/lm/code/vcard_parser" }
 regex = "1.7.0"
 execute = "0.2.11"
+symlink = "0.1.0"

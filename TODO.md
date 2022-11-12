@@ -6,7 +6,7 @@
 1.2: éditer un contact
 1.3: recherche de contact par champ.
 1.4: utilisation emplacement norme XDG
-1.5: carnet à liens symbolique.
+1.5: carnet à liens symbolique, appel optionel.
 
 2/interactive command line: utilisation par l'utilisateur
 2.1: éditer de manière plus simple
@@ -30,3 +30,5 @@ ajout contact par adresse mail
 
 - client sip
 trouver numéro par nom de contact à compléter.
+
+- cardav

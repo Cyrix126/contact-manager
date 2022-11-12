@@ -8,7 +8,6 @@ use std::process::{Command, Stdio};
 use vcard_parser::parse_to_vcards_without_errors;
 use vcard_parser::vcard::property::types::PropertyType;
 use vcard_parser::vcard::property::Property;
-//use vcard_parser::vcard::values::Value;
 use vcard_parser::vcard::Vcard;
 
 use symlink::remove_symlink_file;
@@ -28,6 +27,8 @@ const APP_SHORTNAME: &str = "cm";
 #[command(about = "contact manager", long_about = None)]
 #[command(next_line_help = true)]
 struct Cli {
+    #[arg(short, long)]
+    book: Option<String>,
     #[command(subcommand)]
     command: Commands,
 }
@@ -36,16 +37,16 @@ struct Cli {
 enum Commands {
     #[command(arg_required_else_help = true)]
     New {
-        #[arg(value_name = "BOOK NAME VALUE", required = true)]
+        #[arg(value_name = "FULL NAME VALUE", required = true)]
         value_fn: String,
     },
     NewBook {
-        #[arg(value_name = "FN VALUE", required = true)]
-        value_book: String,
+        #[arg(value_name = "BOOK NAME VALUE", required = true)]
+        book_value: String,
     },
     Addto {
         #[arg(value_name = "BOOK NAME VALUE", required = true)]
-        value_book: String,
+        book_value: String,
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
@@ -53,13 +54,15 @@ enum Commands {
     },
     Removefrom {
         #[arg(value_name = "BOOK NAME VALUE", required = true)]
-        value_book: String,
+        book_value: String,
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
     },
     Find {
+        //  #[arg(value_name = "BOOK NAME")]
+        //  book_name: Option<String>,
         #[arg(value_name = "SHOW FIELD", required = true, value_enum)]
         property_show: PropertyType,
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
@@ -69,6 +72,8 @@ enum Commands {
     },
 
     FindX {
+        //   #[arg(value_name = "BOOK NAME VALUE")]
+        //   book_name: String,
         #[arg(value_name = "SHOW FIELDX", required = true, value_enum)]
         property_show: PropertyTypeX,
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
@@ -77,6 +82,8 @@ enum Commands {
         property_value: String,
     },
     Edit {
+        //   #[arg(value_name = "BOOK NAME VALUE")]
+        //   book_name: String,
         #[arg(value_name = "EDIT FIELD", required = true, value_enum)]
         property_edit: PropertyType,
         #[arg(value_name = "NEW VALUE", required = true)]
@@ -94,7 +101,7 @@ enum Commands {
     },
     DeleteBook {
         #[arg(value_name = "BOOK NAME VALUE", required = true)]
-        value_book: String,
+        book_value: String,
     },
 }
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
@@ -103,8 +110,8 @@ enum PropertyTypeX {
     Test,
 }
 
-fn new(path: &Path, value_fn: String) {
-    let all = read_contacts(&path);
+fn new(dir_contacts: PathBuf, value_fn: String) {
+    let all = read_contacts(&dir_contacts);
     let property_find = PropertyType::Fn;
     let value = value_fn.clone();
 
@@ -113,36 +120,34 @@ fn new(path: &Path, value_fn: String) {
     } else {
         let vcard = Vcard::from_fullname(&value).unwrap();
         let data = vcard.to_string();
-        let (file, _) = find_file_vcard(&path, &vcard);
+        let (file, _) = find_file_vcard(&dir_contacts, &vcard);
         fs::write(file, data).expect("Unable to write file.");
     }
 }
 
-fn newbook(path_books: PathBuf, value_book: String) {
+fn newbook(path_books: PathBuf, book_name: String) {
     let mut path_book = path_books;
-    path_book.push(value_book);
+    path_book.push(book_name);
     fs::create_dir_all(&path_book).expect("Unable to create folder of book");
 }
 
-fn deletebook(path_books: PathBuf, value_book: String) {
+fn deletebook(path_books: PathBuf, book_name: String) {
     let mut path_book = path_books;
-    path_book.push(value_book);
+    path_book.push(book_name);
     fs::remove_dir_all(&path_book).expect("Unable to delete folder of book");
 }
 
 fn addtobook(
-    dir_contacts: &Path,
-    dir_books: PathBuf,
-    value_book: String,
+    dir_contacts: PathBuf,
+    dir_book: PathBuf,
     property_find: PropertyType,
     value_find: String,
 ) {
-    let all = read_contacts(dir_contacts);
+    let all = read_contacts(&dir_contacts);
     if let Some(vcard) = find_vcard(all, property_find, value_find) {
         let (file_path, uid) = find_file_vcard(&dir_contacts, &vcard);
         let file = format!("{}.vcf", uid);
-        let mut file_book = dir_books;
-        file_book.push(value_book);
+        let mut file_book = dir_book;
         file_book.push(file);
         symlink_file(file_path, file_book).unwrap();
     }
@@ -150,12 +155,12 @@ fn addtobook(
 
 fn removefrombook(
     dir_books: PathBuf,
-    value_book: String,
+    book_name: String,
     property_find: PropertyType,
     value_find: String,
 ) {
     let mut dir_book = dir_books;
-    dir_book.push(value_book);
+    dir_book.push(book_name);
     let dirb = dir_book.clone();
     let all = read_contacts(&dirb);
     if let Some(vcard) = find_vcard(all, property_find, value_find) {
@@ -167,7 +172,7 @@ fn removefrombook(
     }
 }
 
-fn read_contacts(path: &Path) -> String {
+fn read_contacts(path: &PathBuf) -> String {
     let files = fs::read_dir(path).unwrap();
     let mut all = String::from("");
     for file in files {
@@ -249,7 +254,7 @@ fn property_is(vcard: &Vcard, property: PropertyType) -> Option<Property> {
 }
 
 fn edit(
-    dir_contacts: &Path,
+    dir_contacts: PathBuf,
     property_edit: PropertyType,
     property_edit_value: String,
     property_find: PropertyType,
@@ -272,7 +277,7 @@ fn edit(
     }
 }
 
-fn delete(dir_contacts: &Path, property_find: PropertyType, value_find: String) {
+fn delete(dir_contacts: PathBuf, property_find: PropertyType, value_find: String) {
     let all = read_contacts(&dir_contacts);
     if let Some(vcard) = find_vcard(all, property_find, value_find) {
         let (file, _) = find_file_vcard(&dir_contacts, &vcard);
@@ -281,16 +286,16 @@ fn delete(dir_contacts: &Path, property_find: PropertyType, value_find: String) 
 }
 
 fn findx(
-    dir_contacts: &Path,
+    book_contacts: PathBuf,
     property_show: PropertyTypeX,
     property_find: PropertyType,
     value_find: String,
 ) {
-    let all = read_contacts(dir_contacts);
+    let all = read_contacts(&book_contacts);
     if let Some(vcard) = find_vcard(all, property_find, value_find) {
         match property_show {
             PropertyTypeX::Motpoli => {
-                let (path, _) = find_file_vcard(&dir_contacts, &vcard);
+                let (path, _) = find_file_vcard(&book_contacts, &vcard);
                 let mut command = Command::new(RG_PATH);
                 command.arg("X-MOTPOLI");
                 command.arg(path);
@@ -311,12 +316,12 @@ fn findx(
 }
 
 fn find(
-    dir_contacts: &Path,
+    dir_contacts: PathBuf,
     property_show: PropertyType,
     property_find: PropertyType,
     value_find: String,
 ) {
-    let all = read_contacts(dir_contacts);
+    let all = read_contacts(&dir_contacts);
     if let Some(vcard) = find_vcard(all, property_find, value_find) {
         if let Some(property) = property_is(&vcard, property_show) {
             println!("{}", property.get_value());
@@ -324,80 +329,98 @@ fn find(
     }
 }
 
+fn find_path_book(dir_books: &PathBuf, book_name: String) -> PathBuf {
+    let mut path = PathBuf::new();
+    path.push(dir_books);
+    path.push(book_name);
+    path
+}
+
 fn main() {
     let xdg_dirs = xdg::BaseDirectories::with_prefix(APP_SHORTNAME).unwrap();
-    let dir_contacts = &mut xdg_dirs.get_data_home();
+    let mut dir_contacts = xdg_dirs.get_data_home().clone();
     dir_contacts.push("contacts");
-    let mut dir_books = xdg_dirs.get_data_home();
-    dir_books.push("books");
     xdg_dirs.create_data_directory("contacts").unwrap();
+
+    let mut dir_books = xdg_dirs.get_data_home().clone();
+    dir_books.push("books");
+
     xdg_dirs.create_data_directory("books").unwrap();
 
-    //println!("{dir_contacts}");
-
     let args = Cli::parse();
+    let book_default_name = String::from("default");
+    let book_name: String;
+    if let Some(book) = args.book.as_deref() {
+        book_name = book.to_string();
+    } else {
+        book_name = book_default_name;
+    };
+
+    //let books = fs::read_dir(&dir_books);
 
     match args.command {
         Commands::Find {
+            //  mut book_name,
             property_show,
             property_find,
             property_value,
             ..
         } => find(
-            &dir_contacts.as_path(),
+            find_path_book(&dir_books, book_name),
             property_show,
             property_find,
             property_value,
         ),
         Commands::FindX {
+            //  book_name,
             property_show,
             property_find,
             property_value,
             ..
         } => findx(
-            &dir_contacts.as_path(),
+            find_path_book(&dir_books, book_name),
             property_show,
             property_find,
             property_value,
         ),
         Commands::Edit {
+            //   book_name,
             property_edit,
             property_edit_value,
             property_find,
             property_value,
             ..
         } => edit(
-            dir_contacts.as_path(),
+            find_path_book(&dir_books, book_name),
             property_edit,
             property_edit_value,
             property_find,
             property_value,
         ),
-        Commands::New { value_fn, .. } => new(dir_contacts.as_path(), value_fn),
+        Commands::New { value_fn, .. } => new(dir_contacts, value_fn),
         Commands::Delete {
             property_find,
             property_value,
             ..
-        } => delete(dir_contacts.as_path(), property_find, property_value),
-        Commands::NewBook { value_book, .. } => newbook(dir_books, value_book),
-        Commands::DeleteBook { value_book, .. } => deletebook(dir_books, value_book),
+        } => delete(dir_contacts, property_find, property_value),
+        Commands::NewBook { book_value, .. } => newbook(dir_books, book_value),
+        Commands::DeleteBook { book_value, .. } => deletebook(dir_books, book_value),
         Commands::Addto {
-            value_book,
+            book_value,
             property_find,
             property_value,
             ..
         } => addtobook(
-            dir_contacts.as_path(),
-            dir_books,
-            value_book,
+            dir_contacts,
+            find_path_book(&dir_books, book_value),
             property_find,
             property_value,
         ),
         Commands::Removefrom {
-            value_book,
+            book_value,
             property_find,
             property_value,
             ..
-        } => removefrombook(dir_books, value_book, property_find, property_value),
+        } => removefrombook(dir_books, book_value, property_find, property_value),
     };
 }
