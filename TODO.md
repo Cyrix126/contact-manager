@@ -26,6 +26,8 @@
 
 - client mail neomutt: 
 trouver adresse mail par nom de contact ou adresse mail à compléter 
+par génération d'index: générer une liste "email" "full name".
+
 ajout contact par adresse mail
 
 - client sip

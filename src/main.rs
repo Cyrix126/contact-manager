@@ -103,6 +103,12 @@ enum Commands {
         #[arg(value_name = "BOOK NAME VALUE", required = true)]
         book_value: String,
     },
+    GenerateIndex {
+	#[arg(value_name = "FIELD 1", required = true, value_enum)]
+	property1: PropertyType,
+	#[arg(value_name = "FIELD 2", required = true, value_enum)]
+	property2: PropertyType,
+	},
 }
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
 enum PropertyTypeX {
@@ -221,6 +227,10 @@ fn find_vcard(all: String, property_find: &PropertyType, value_find: &String) ->
     None
 }
 
+
+
+
+
 fn property_is(vcard: &Vcard, property: PropertyType) -> Option<Property> {
     match property {
         PropertyType::Tel => {
@@ -318,6 +328,19 @@ fn findx(
     }
 }
 
+fn generate_index(dir_book: PathBuf, property1: PropertyType, property2: PropertyType) {
+let all = read_contacts(&dir_book);
+let vcards = parse_to_vcards_without_errors(&all);
+for vcard in vcards {
+let properties1 = vcard.get_properties_by_type(&property1);
+let properties2 = vcard.get_properties_by_type(&property2);
+if !properties1.is_empty() && !properties2.is_empty() { 		
+	let property1 = properties1[0].get_value().to_string();   
+	let property2 = properties2[0].get_value().to_string();
+	println!("{property1}\t{property2}");
+            }
+        }
+    }
 fn find(
     dir_contacts: PathBuf,
     property_show: PropertyType,
@@ -425,5 +448,13 @@ fn main() {
             property_value,
             ..
         } => removefrombook(dir_books, book_value, property_find, property_value),
+	Commands::GenerateIndex {
+		property1,
+		property2,
+		..} => generate_index(
+		find_path_book(&dir_books, book_name),
+		property1,
+		property2),
     };
+    
 }
