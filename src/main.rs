@@ -116,7 +116,7 @@ enum PropertyTypeX {
     Test,
 }
 
-fn new(dir_book: PathBuf, dir_contacts: PathBuf, value_fn: String) {
+fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: String) {
     let all = read_contacts(&dir_contacts);
     let property_find = PropertyType::Fn;
     let value = value_fn.clone();

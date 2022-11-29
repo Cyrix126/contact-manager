@@ -26,7 +26,7 @@
 
 - client mail neomutt: 
 trouver adresse mail par nom de contact ou adresse mail à compléter 
-par génération d'index: générer une liste "email" "full name".
+par génération d'index: générer une liste "email" "full name". OK
 
 ajout contact par adresse mail
 
