@@ -8,8 +8,15 @@
 1.4: utilisation emplacement norme XDG
 1.5: carnet à liens symbolique, appel optionel.
 
+1.6: chercher dans toutes les valeurs, pas seulement la première. OK
+
+
 2/interactive command line: utilisation par l'utilisateur
 2.1: éditer de manière plus simple
+	- [ ] éditer mail edit-email
+	- [ ] éditer téléphone edit-tel
+	- [ ] éditer adresse fixe edit-addr
+	- [ ] éditer Nom complet edit
 2.2: afficher des comptes rendu et erreurs.
 2.3: recherche moins radicale
 2.4: interaction pour choisir plusieurs résultats.

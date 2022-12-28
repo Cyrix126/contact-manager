@@ -60,6 +60,9 @@ enum Commands {
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
     },
+
+    
+
     Find {
         //  #[arg(value_name = "BOOK NAME")]
         //  book_name: Option<String>,
@@ -69,6 +72,8 @@ enum Commands {
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
+	#[arg(value_name = "boolean")]
+	interactive: bool,
     },
 
     FindX {
@@ -80,6 +85,8 @@ enum Commands {
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
+        #[arg(value_name = "boolean")]
+        interactive: bool,
     },
     Edit {
         //   #[arg(value_name = "BOOK NAME VALUE")]
@@ -92,6 +99,8 @@ enum Commands {
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
+        #[arg(value_name = "boolean")]
+        interactive: bool,
     },
     Delete {
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
@@ -121,7 +130,7 @@ fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: String) {
     let property_find = PropertyType::Fn;
     let value = value_fn.clone();
 
-    if let Some(_) = find_vcard(all, &property_find, &value_fn) {
+    if let Some(_) = find_vcard(all, &property_find, &value_fn, false) {
         println!("Le contact {} existe déjà.", value)
     } else {
         let vcard = Vcard::from_fullname(&value).unwrap();
@@ -151,7 +160,7 @@ fn addtobook(
     value_find: String,
 ) {
     let all = read_contacts(&dir_contacts);
-    if let Some(vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(vcard) = find_vcard(all, &property_find, &value_find, false) {
         let (file_path, uid) = find_file_vcard(&dir_contacts, &vcard);
         let file = format!("{}.vcf", uid);
         let mut file_book = dir_book;
@@ -170,7 +179,7 @@ fn removefrombook(
     dir_book.push(book_name);
     let dirb = dir_book.clone();
     let all = read_contacts(&dirb);
-    if let Some(vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(vcard) = find_vcard(all, &property_find, &value_find, false) {
         let (_, uid) = find_file_vcard(&dir_book, &vcard);
         let file = format!("{}.vcf", uid);
         let mut file_book = dir_book;
@@ -201,27 +210,24 @@ fn find_file_vcard<'a>(dir_contacts: &'a Path, vcard: &'a Vcard) -> (PathBuf, St
     (dir_contacts.join(file), uid)
 }
 
-fn find_vcard(all: String, property_find: &PropertyType, value_find: &String) -> Option<Vcard> {
+fn find_vcard(all: String, property_find: &PropertyType, value_find: &String, interactive: bool) -> Option<Vcard> {
     let vcards = parse_to_vcards_without_errors(&all);
     for vcard in vcards {
         let properties = vcard.get_properties_by_type(property_find);
-        if !properties.is_empty() {
-            let property: String;
 
-            if property_find != &PropertyType::Tel {
-                property = properties[0].get_value().to_string();
-            } else {
-                property = properties[0]
-                    .get_value()
-                    .to_string()
-                    .chars()
-                    .filter(|c| c.is_digit(10))
-                    .collect();
-            }
-
-            if &property == value_find {
+	for property in properties {
+                let mut value_present = property.get_value().to_string();
+		if property_find == &PropertyType::Tel {value_present = value_present.chars().filter(|c| c.is_digit(10)).collect();}
+            if &value_present == value_find {
                 return Some(vcard);
-            }
+            	   }
+	     else if interactive {
+		let patterns = value_find.split(" ");
+		for x in patterns {
+		if value_present.contains(x) { return Some(vcard)}
+		}
+	    }
+	   
         }
     }
     None
@@ -270,9 +276,10 @@ fn edit(
     property_edit_value: String,
     property_find: PropertyType,
     value_find: String,
+    interactive: bool,
 ) {
     let all = read_contacts(&dir_contacts);
-    if let Some(mut vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(mut vcard) = find_vcard(all, &property_find, &value_find, interactive) {
         if let Some(property) = property_is(&vcard, property_edit) {
             vcard
                 .update_property(property.get_uuid(), &property_edit_value)
@@ -290,7 +297,7 @@ fn edit(
 
 fn delete(dir_book: PathBuf, dir_contacts: PathBuf, property_find: PropertyType, value_find: String) {
     let all = read_contacts(&dir_contacts);
-    if let Some(vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(vcard) = find_vcard(all, &property_find, &value_find, false) {
         let (file, _) = find_file_vcard(&dir_contacts, &vcard);
         fs::remove_file(file).expect("File delete failed");
 	let (symlink, _) = find_file_vcard(&dir_book, &vcard);
@@ -303,9 +310,10 @@ fn findx(
     property_show: PropertyTypeX,
     property_find: PropertyType,
     value_find: String,
+    interactive: bool,
 ) {
     let all = read_contacts(&book_contacts);
-    if let Some(vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(vcard) = find_vcard(all, &property_find, &value_find, interactive) {
         match property_show {
             PropertyTypeX::Motpoli => {
                 let (path, _) = find_file_vcard(&book_contacts, &vcard);
@@ -346,9 +354,10 @@ fn find(
     property_show: PropertyType,
     property_find: PropertyType,
     value_find: String,
+    interactive: bool,
 ) {
     let all = read_contacts(&dir_contacts);
-    if let Some(vcard) = find_vcard(all, &property_find, &value_find) {
+    if let Some(vcard) = find_vcard(all, &property_find, &value_find, interactive) {
         if let Some(property) = property_is(&vcard, property_show) {
             println!("{}", property.get_value());
         }
@@ -390,24 +399,28 @@ fn main() {
             property_show,
             property_find,
             property_value,
+	    interactive,
             ..
         } => find(
             find_path_book(&dir_books, book_name),
             property_show,
             property_find,
             property_value,
+	    interactive,
         ),
         Commands::FindX {
             //  book_name,
             property_show,
             property_find,
             property_value,
+	    interactive,
             ..
         } => findx(
             find_path_book(&dir_books, book_name),
             property_show,
             property_find,
             property_value,
+	    interactive,
         ),
         Commands::Edit {
             //   book_name,
@@ -415,6 +428,7 @@ fn main() {
             property_edit_value,
             property_find,
             property_value,
+	    interactive,
             ..
         } => edit(
             find_path_book(&dir_books, book_name),
@@ -422,6 +436,7 @@ fn main() {
             property_edit_value,
             property_find,
             property_value,
+	    interactive,
         ),
         Commands::New { value_fn, .. } => new(dir_contacts, find_path_book(&dir_books, book_name), value_fn),
         Commands::Delete {
