@@ -2,28 +2,26 @@ use std::fs::{self, read_to_string};
 use std::path::Path;
 use std::path::PathBuf;
 
+use clap::Parser;
 use execute::Execute;
 use regex::Regex;
 use std::process::{Command, Stdio};
+use symlink::remove_symlink_file;
+use symlink::symlink_file;
 use vcard_parser::parse_to_vcards_without_errors;
 use vcard_parser::vcard::property::types::PropertyType;
 use vcard_parser::vcard::property::Property;
 use vcard_parser::vcard::Vcard;
-use clap::Parser;
-use symlink::remove_symlink_file;
-use symlink::symlink_file;
 
 mod args;
 mod interactive;
-use crate::args::{PropertyTypeX, Cli, Commands};
+use crate::args::{Cli, Commands, PropertyTypeX};
 use crate::interactive::find_interactive;
 
 extern crate xdg;
 
 const RG_PATH: &str = "/home/lm/.cargo/bin/rg";
 const APP_SHORTNAME: &str = "cm";
-
-
 
 fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: String) {
     let all = read_contacts(&dir_contacts);
@@ -37,7 +35,7 @@ fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: String) {
         let data = vcard.to_string();
         let (file, _) = find_file_vcard(&dir_contacts, &vcard);
         fs::write(file, data).expect("Unable to write file.");
-	addtobook(dir_contacts, dir_book, property_find, value_fn);
+        addtobook(dir_contacts, dir_book, property_find, value_fn);
     }
 }
 
@@ -115,25 +113,18 @@ fn find_one_vcard(all: String, property_find: &PropertyType, value_find: &String
     for vcard in vcards {
         let properties = vcard.get_properties_by_type(property_find);
 
-	for property in properties {
-                let mut value_present = property.get_value().to_string();
-		if property_find == &PropertyType::Tel {value_present = value_present.chars().filter(|c| c.is_digit(10)).collect();}
+        for property in properties {
+            let mut value_present = property.get_value().to_string();
+            if property_find == &PropertyType::Tel {
+                value_present = value_present.chars().filter(|c| c.is_digit(10)).collect();
+            }
             if &value_present == value_find {
                 return Some(vcard);
-            	   }
-	     
-	   
+            }
         }
     }
     None
 }
-
-
-
-
-
-
-
 
 fn property_is(vcard: &Vcard, property: PropertyType) -> Option<Property> {
     match property {
@@ -149,7 +140,7 @@ fn property_is(vcard: &Vcard, property: PropertyType) -> Option<Property> {
                         .filter(|c| c.is_digit(10))
                         .collect::<String>()
                 );
-                let mut vcard2= vcard.clone();
+                let mut vcard2 = vcard.clone();
                 vcard2
                     .update_property(properties_found[0].get_uuid(), &form_tel)
                     .expect("Unable to update property.");
@@ -168,10 +159,10 @@ fn property_is(vcard: &Vcard, property: PropertyType) -> Option<Property> {
     None
 }
 
- 
-
 fn vcard_fn(vcard: &Vcard) -> String {
-    vcard.get_properties_by_type(&PropertyType::Fn)[0].get_value().to_string()
+    vcard.get_properties_by_type(&PropertyType::Fn)[0]
+        .get_value()
+        .to_string()
 }
 
 fn edit(
@@ -198,13 +189,18 @@ fn edit(
     }
 }
 
-fn delete(dir_book: PathBuf, dir_contacts: PathBuf, property_find: PropertyType, value_find: String) {
+fn delete(
+    dir_book: PathBuf,
+    dir_contacts: PathBuf,
+    property_find: PropertyType,
+    value_find: String,
+) {
     let all = read_contacts(&dir_contacts);
     if let Some(vcard) = find_one_vcard(all, &property_find, &value_find) {
         let (file, _) = find_file_vcard(&dir_contacts, &vcard);
         fs::remove_file(file).expect("File delete failed");
-	let (symlink, _) = find_file_vcard(&dir_book, &vcard);
-	remove_symlink_file(symlink).expect("Symlink delete failed");
+        let (symlink, _) = find_file_vcard(&dir_book, &vcard);
+        remove_symlink_file(symlink).expect("Symlink delete failed");
     }
 }
 
@@ -239,18 +235,30 @@ fn findx(
 }
 
 fn generate_index(dir_book: PathBuf, property1: PropertyType, property2: PropertyType) {
-let all = read_contacts(&dir_book);
-let vcards = parse_to_vcards_without_errors(&all);
-for vcard in vcards {
-let properties1 = vcard.get_properties_by_type(&property1);
-let properties2 = vcard.get_properties_by_type(&property2);
-if !properties1.is_empty() && !properties2.is_empty() { 		
-	let property1 = properties1[0].get_value().to_string();   
-	let property2 = properties2[0].get_value().to_string();
-	println!("{property1}\t{property2}");
-            }
+    let all = read_contacts(&dir_book);
+    let vcards = parse_to_vcards_without_errors(&all);
+    for vcard in vcards {
+        let properties1 = vcard.get_properties_by_type(&property1);
+        let properties2 = vcard.get_properties_by_type(&property2);
+        if !properties1.is_empty() && !properties2.is_empty() {
+            let property1 = properties1[0].get_value().to_string();
+            let property2 = properties2[0].get_value().to_string();
+            println!("{property1}\t{property2}");
         }
     }
+}
+fn list(dir_book: PathBuf, property: PropertyType) {
+    let all = read_contacts(&dir_book);
+    let vcards = parse_to_vcards_without_errors(&all);
+    for vcard in vcards {
+        let properties = vcard.get_properties_by_type(&property);
+        if !properties.is_empty() {
+            let property = properties[0].get_value().to_string();
+            println!("{property}");
+        }
+    }
+}
+
 fn find(
     dir_contacts: PathBuf,
     property_show: PropertyType,
@@ -258,15 +266,15 @@ fn find(
     value_find: String,
 ) {
     let all = read_contacts(&dir_contacts);
- 
-        // pas interactif, il faut un seul résultat.
-    
-            if let Some(vcard) = find_one_vcard(all, &property_find, &value_find) {
+
+    // pas interactif, il faut un seul résultat.
+
+    if let Some(vcard) = find_one_vcard(all, &property_find, &value_find) {
         if let Some(property) = property_is(&vcard, property_show) {
             println!("{}", property.get_value());
-         }
         }
-        }
+    }
+}
 
 fn find_path_book(dir_books: &PathBuf, book_name: String) -> PathBuf {
     let mut path = PathBuf::new();
@@ -347,12 +355,21 @@ fn main() {
             property_find,
             property_value,
         ),
-        Commands::New { value_fn, .. } => new(dir_contacts, find_path_book(&dir_books, book_name), value_fn),
+        Commands::New { value_fn, .. } => new(
+            dir_contacts,
+            find_path_book(&dir_books, book_name),
+            value_fn,
+        ),
         Commands::Delete {
             property_find,
             property_value,
             ..
-        } => delete(find_path_book(&dir_books, book_name), dir_contacts, property_find, property_value),
+        } => delete(
+            find_path_book(&dir_books, book_name),
+            dir_contacts,
+            property_find,
+            property_value,
+        ),
         Commands::NewBook { book_value, .. } => newbook(dir_books, book_value),
         Commands::DeleteBook { book_value, .. } => deletebook(dir_books, book_value),
         Commands::Addto {
@@ -372,13 +389,11 @@ fn main() {
             property_value,
             ..
         } => removefrombook(dir_books, book_value, property_find, property_value),
-	Commands::GenerateIndex {
-		property1,
-		property2,
-		..} => generate_index(
-		find_path_book(&dir_books, book_name),
-		property1,
-		property2),
+        Commands::GenerateIndex {
+            property1,
+            property2,
+            ..
+        } => generate_index(find_path_book(&dir_books, book_name), property1, property2),
+        Commands::List { property, .. } => list(find_path_book(&dir_books, book_name), property),
     };
-    
 }

@@ -21,6 +21,9 @@
 	- [ ] éditer téléphone edit-tel
 	- [ ] éditer adresse fixe edit-addr
 	- [ ] éditer Nom complet edit
+	
+- recherche interactive pour ajout dans carnet.
+- liste de carnets
 2.2: afficher des comptes rendu et erreurs.
 2.4: interaction pour choisir plusieurs résultats.
 2.5: interaction pour éditer les champs

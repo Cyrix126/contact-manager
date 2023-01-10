@@ -16,3 +16,13 @@ utilise vcard_parser
 
 https://docs.rs/vcard_parser/0.1.0/vcard_parser/
 semble suffisant pour parser et modifier vcard.
+
+
+édition facile:
+
+recherche facile:
+
+
+étape:
+choisir le contact et la valeur à modifier: cm edit-i (alias ce).
+choix: ajout d'une valeur, modification d'une valeur présente.

@@ -41,8 +41,6 @@ pub enum Commands {
         property_value: String,
     },
 
-    
-
     Find {
         //  #[arg(value_name = "BOOK NAME")]
         //  book_name: Option<String>,
@@ -53,7 +51,7 @@ pub enum Commands {
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
     },
-    
+
     FindInteractive {
         #[arg(value_name = "SHOW FIELD", required = true, value_enum)]
         property_show: PropertyType,
@@ -96,11 +94,15 @@ pub enum Commands {
         book_value: String,
     },
     GenerateIndex {
-	#[arg(value_name = "FIELD 1", required = true, value_enum)]
-	property1: PropertyType,
-	#[arg(value_name = "FIELD 2", required = true, value_enum)]
-	property2: PropertyType,
-	},
+        #[arg(value_name = "FIELD 1", required = true, value_enum)]
+        property1: PropertyType,
+        #[arg(value_name = "FIELD 2", required = true, value_enum)]
+        property2: PropertyType,
+    },
+    List {
+        #[arg(value_name = "FIELD 1", required = true, value_enum)]
+        property: PropertyType,
+    },
 }
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
 pub enum PropertyTypeX {
