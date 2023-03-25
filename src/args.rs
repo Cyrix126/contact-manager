@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use vcard_parser::vcard::property::types::PropertyType;
 #[derive(Parser)]
 #[command(name = "contact-manager")]
 #[command(author = "Louis-Marie Baer <lm@baermail.fr>")]
@@ -108,4 +107,26 @@ pub enum Commands {
 pub enum PropertyTypeX {
     Motpoli,
     Test,
+    Siret,
+}
+
+#[derive(Clone, Eq, PartialEq, ValueEnum)]
+pub enum PropertyType {
+    Fn,
+    Tel,
+    Adr,
+    Email,
+    NickName
+}
+
+impl PropertyType {
+   pub fn to_name(&self) -> &str {
+        match self {
+            PropertyType::Fn => {"FN"},
+            PropertyType::Tel => {"TEL"},
+            PropertyType::Adr => {"ADR"},
+            PropertyType::Email => {"EMAIL"},
+            PropertyType::NickName => {"NICKNAME"}
+        }
+    }
 }
