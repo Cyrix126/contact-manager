@@ -116,17 +116,19 @@ pub enum PropertyType {
     Tel,
     Adr,
     Email,
-    NickName
+    NickName,
+    Name,
 }
 
 impl PropertyType {
-   pub fn to_name(&self) -> &str {
+    pub fn to_name(&self) -> &str {
         match self {
-            PropertyType::Fn => {"FN"},
-            PropertyType::Tel => {"TEL"},
-            PropertyType::Adr => {"ADR"},
-            PropertyType::Email => {"EMAIL"},
-            PropertyType::NickName => {"NICKNAME"}
+            PropertyType::Fn => "FN",
+            PropertyType::Tel => "TEL",
+            PropertyType::Adr => "ADR",
+            PropertyType::Email => "EMAIL",
+            PropertyType::NickName => "NICKNAME",
+            PropertyType::Name => "N",
         }
     }
 }

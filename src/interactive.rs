@@ -38,13 +38,13 @@ pub fn find_vcards(
 ) -> Vec<Vcard> {
     let vcards = parse_vcards(&all).unwrap();
     let mut vcards_found: Vec<Vcard> = Vec::new();
-    
+
     for vcard in vcards {
         if properties_by_name(&vcard, property_show).is_empty() {
-            continue
+            continue;
         }
         let properties = properties_by_name(&vcard, property_find);
- 
+
         for property in properties {
             let value_present = property.get_value().to_string();
             // seulment le numéro pour les téléphones, pas le type. (home, work)
@@ -66,20 +66,23 @@ pub fn find_vcards(
         }
     }
     vcards_found
-    
 }
 
-
-
-
-
 pub fn properties_by_name(vcard: &Vcard, property_find: &PropertyType) -> Vec<Property> {
-       let mut properties = Vec::new();
-        match property_find {
-             PropertyType::Fn|PropertyType::NickName => {if let Some(property) = vcard.get_property_by_name(property_find.to_name()) {
-                 properties.push(property)
-             }},
-             PropertyType::Adr|PropertyType::Tel|PropertyType::Email => { properties.extend(vcard.get_properties_by_name(property_find.to_name()).into_iter())}
+    let mut properties = Vec::new();
+    match property_find {
+        PropertyType::Fn | PropertyType::Name => {
+            if let Some(property) = vcard.get_property_by_name(property_find.to_name()) {
+                properties.push(property)
+            }
         }
-        properties
+        PropertyType::Adr | PropertyType::NickName | PropertyType::Tel | PropertyType::Email => {
+            properties.extend(
+                vcard
+                    .get_properties_by_name(property_find.to_name())
+                    .into_iter(),
+            )
+        }
+    }
+    properties
 }

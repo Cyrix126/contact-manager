@@ -7,14 +7,14 @@ use clap::Parser;
 use execute::Execute;
 use interactive::properties_by_name;
 use regex::Regex;
+use std::process::{Command, Stdio};
+use symlink::remove_symlink_file;
+use symlink::symlink_file;
+use uuid::Uuid;
 use vcard_parser::parse_vcards;
 use vcard_parser::traits::HasValue;
 use vcard_parser::vcard::value::value_text::ValueTextData;
 use vcard_parser::vcard::value::Value;
-use std::process::{Command, Stdio};
-use symlink::remove_symlink_file;
-use symlink::symlink_file;
-
 
 use vcard_parser::vcard::property::Property;
 use vcard_parser::vcard::Vcard;
@@ -37,7 +37,11 @@ fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: &str) {
     if let Some(_) = find_one_vcard(all, &property_find, value_fn) {
         println!("Le contact {} existe déjà.", value)
     } else {
-        let vcard = Vcard::new(value_fn);
+        let mut vcard = Vcard::new(value_fn);
+        let uuid = format!("UID:{}\n", Uuid::new_v4());
+        vcard
+            .set_property(&Property::try_from(uuid.as_str()).unwrap())
+            .unwrap();
         let data = vcard.to_string();
         let (file, _) = find_file_vcard(&dir_contacts, &vcard);
         fs::write(file, data).expect("Unable to write file.");
@@ -133,17 +137,18 @@ fn find_one_vcard(all: String, property_find: &PropertyType, value_find: &str) -
 }
 
 fn property_is(vcard: &Vcard, property: &PropertyType) -> Option<Property> {
-       let properties_found = properties_by_name(&vcard, property);
-            if !properties_found.is_empty() {
-                let property_owned = properties_found[0].clone();
-                return Some(property_owned);
-            }
-            None
+    let properties_found = properties_by_name(&vcard, property);
+    if !properties_found.is_empty() {
+        let property_owned = properties_found[0].clone();
+        return Some(property_owned);
+    }
+    None
 }
 
-
 fn vcard_fn(vcard: &Vcard) -> String {
-    vcard.get_property_by_name("FN").unwrap()
+    vcard
+        .get_property_by_name("FN")
+        .unwrap()
         .get_value()
         .to_string()
 }
@@ -157,12 +162,16 @@ fn edit(
 ) {
     let all = read_contacts(&dir_contacts);
     if let Some(mut vcard) = find_one_vcard(all, &property_find, &value_find) {
-        
         let mut property = Property::default(property_edit.to_name());
-        property.set_value(Value::from(ValueTextData::from(property_edit_value))).expect("Unable to set value.");
-        vcard.set_property(&property)
-                .expect("Unable to update property.");
-    }else {panic!("ne peux pas éditer un contact inexistant !")}
+        property
+            .set_value(Value::from(ValueTextData::from(property_edit_value)))
+            .expect("Unable to set value.");
+        vcard
+            .set_property(&property)
+            .expect("Unable to update property.");
+    } else {
+        panic!("ne peux pas éditer un contact inexistant !")
+    }
 }
 
 fn delete(
@@ -382,7 +391,11 @@ fn main() {
             property1,
             property2,
             ..
-        } => generate_index(find_path_book(&dir_books, book_name), &property1, &property2),
+        } => generate_index(
+            find_path_book(&dir_books, book_name),
+            &property1,
+            &property2,
+        ),
         Commands::List { property, .. } => list(find_path_book(&dir_books, book_name), &property),
     };
 }
