@@ -4,15 +4,13 @@ use std::path::PathBuf;
 
 use args::PropertyType;
 use clap::Parser;
-use execute::Execute;
 use interactive::properties_by_name;
-use regex::Regex;
-use std::process::{Command, Stdio};
 use symlink::remove_symlink_file;
 use symlink::symlink_file;
 use uuid::Uuid;
 use vcard_parser::parse_vcards;
 use vcard_parser::traits::HasValue;
+use vcard_parser::vcard::property::property_xname::PropertyXNameData;
 use vcard_parser::vcard::value::value_text::ValueTextData;
 use vcard_parser::vcard::value::Value;
 
@@ -21,12 +19,11 @@ use vcard_parser::vcard::Vcard;
 
 mod args;
 mod interactive;
-use crate::args::{Cli, Commands, PropertyTypeX};
+use crate::args::{Cli, Commands};
 use crate::interactive::find_interactive;
 
 extern crate xdg;
 
-const RG_PATH: &str = "/home/lm/.cargo/bin/rg";
 const APP_SHORTNAME: &str = "cm";
 
 fn new(dir_contacts: PathBuf, dir_book: PathBuf, value_fn: &str) {
@@ -169,6 +166,9 @@ fn edit(
         vcard
             .set_property(&property)
             .expect("Unable to update property.");
+        // écrire le vcard sur le fichier
+        let (file, _) = find_file_vcard(&dir_contacts, &vcard);
+        fs::write(file, vcard.to_string()).expect("Unable to write file.");
     } else {
         panic!("ne peux pas éditer un contact inexistant !")
     }
@@ -191,43 +191,19 @@ fn delete(
 
 fn findx(
     book_contacts: PathBuf,
-    property_show: PropertyTypeX,
+    property_show: &str,
     property_find: PropertyType,
     value_find: String,
 ) {
     let all = read_contacts(&book_contacts);
     if let Some(vcard) = find_one_vcard(all, &property_find, &value_find) {
-        match property_show {
-            PropertyTypeX::Motpoli => {
-                let (path, _) = find_file_vcard(&book_contacts, &vcard);
-                let mut command = Command::new(RG_PATH);
-                command.arg("X-MOTPOLI");
-                command.arg(path);
-                command.stdout(Stdio::piped());
-                let property_found = command.execute_output().unwrap();
-                let property_string = String::from_utf8(property_found.stdout).unwrap();
-                let property_regex = Regex::new(r"(?i)X-MOTPOLI:")
-                    .unwrap()
-                    .replace_all(&property_string, "");
-                print!("{property_regex}");
-            }
-            PropertyTypeX::Siret => {
-                let (path, _) = find_file_vcard(&book_contacts, &vcard);
-                let mut command = Command::new(RG_PATH);
-                command.arg("X-SIRET");
-                command.arg(path);
-                command.stdout(Stdio::piped());
-                let property_found = command.execute_output().unwrap();
-                let property_string = String::from_utf8(property_found.stdout).unwrap();
-                let property_regex = Regex::new(r"(?i)X-SIRET:")
-                    .unwrap()
-                    .replace_all(&property_string, "");
-                print!("{property_regex}");
-            }
-
-            _ => {
-                println!("seul les propriété X supporté sont X-MOTPOLI et X-SIRET");
-            }
+        let property = Property::PropertyXName(PropertyXNameData::default(property_show));
+        let property_found = vcard.get_property_ref(&property);
+        if let Some(property) = property_found {
+            let value = property.get_value();
+            print!("{value}");
+        } else {
+            print!("Aucune propriété de ce type.")
         }
     }
 }
@@ -335,7 +311,7 @@ fn main() {
             ..
         } => findx(
             find_path_book(&dir_books, book_name),
-            property_show,
+            &property_show,
             property_find,
             property_value,
         ),

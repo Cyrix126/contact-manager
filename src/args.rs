@@ -64,7 +64,7 @@ pub enum Commands {
         //   #[arg(value_name = "BOOK NAME VALUE")]
         //   book_name: String,
         #[arg(value_name = "SHOW FIELDX", required = true, value_enum)]
-        property_show: PropertyTypeX,
+        property_show: String,
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
         property_find: PropertyType,
         #[arg(value_name = "VALUE", required = true)]
@@ -102,12 +102,6 @@ pub enum Commands {
         #[arg(value_name = "FIELD 1", required = true, value_enum)]
         property: PropertyType,
     },
-}
-#[derive(Clone, Eq, PartialEq, ValueEnum)]
-pub enum PropertyTypeX {
-    Motpoli,
-    Test,
-    Siret,
 }
 
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
