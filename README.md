@@ -1,13 +1,15 @@
 # README
 
+
+ **WIP !**
+
 ## Contact-Manager
 
 contact-manager (cm for short), is a command line contact manager written in rust using the library [vard_parser](https://crates.io/crates/vcard_parser).
-It also expose his own high lever library for other crates to use.
+It also expose his own high-level library for other crates to use.
 
 ### Overview
 
-**WIP !**
 
 cm is used to manage contacts manually or automaticly and their address books. It can be integrated with softwares who need access to contacts using the public API or by the immediate mode and/or generation of index.
  
@@ -21,9 +23,9 @@ Return result(s) after one command, made for alias command in terminal or for in
 
 Interact with the user with prompts and menu to make the use more user friendly.\
 
-#### Features
+### Features
 
-##### Immediate Mode
+#### Immediate Mode
 
 - [x] create, find, modify and delete contact, filter by book
 - [x] create, rename, delete address book.
@@ -33,22 +35,28 @@ Interact with the user with prompts and menu to make the use more user friendly.
 - [ ] delete a field
 - [x] generate index for other sotfware (such as an email client).
 
-##### Public API
+#### Public API
 
 - [ ] create, find, modify and delete contact, filter by book
 - [ ] search for any field by any field, filter by book
 - [ ] edit any field by any field, filter by book
 
-##### Interactive Mode
+#### Interactive Mode
 
 - [x] forgiveable search with multiple finds.
 - [ ] menu for managing contacts.
 - [ ] presentation of a contacts.
 
-##### TUI
+#### TUI
 
 - [ ] interface for managing contacts and books (low priority).
 
+### Usage
+
+
+```cm --help``` 
+
+To get all available commands for immediate and interactive mode.
 
 #### Examples
 
@@ -69,7 +77,7 @@ cm immediate addto clients fn FullName
 
 
 
-#### Technical details
+### Technical details
 
 cm is using [vcard_parse](https://crates.io/crates/vcard_parser) to make all the parsing and saving of the vcard v4 format file.
 It manages the contacts in adressbooks with links to never have a contact file more than once on your storage device. So you have the main folder with all your contacts and one folder per addressbook which contains a link for every contacts in this book.
@@ -78,24 +86,30 @@ cm will not let you input invalid data (will refuse for use of immediate mode or
 
 All the saved contacts are in vcard format, which would enable you to use this programm whih a cardav syncroniser. (see [vdirsyncer-rs](https://git.sr.ht/~whynothugo/vdirsyncer-rs) for a work on that topic in rust).
 
+### RFC
 
-#### Performance
+[RFC6350 vCard Format Specification](https://datatracker.ietf.org/doc/html/rfc6350) thanks for vcard_parser.
+
+[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/)
+Thanks to [xdg](https://docs.rs/xdg/latest/xdg/)
+
+### Performance
 
 cm aims and is fast with immediate response from a human perspective. The first reason I began to write this software was because khard is bloated and slow.
 
-#### Security
+### Security
 
 This programm does not use any encryption. It does consider that you use it on a environnement controlled by you and not accessible by untrusted parties.
 
-#### Privacy
+### Privacy
 
 This programm does not communicate whatsoever to anyone.
 
-#### License
+### License
 
 This programm is GPLv3.
 
-#### Alternatives
+### Alternatives
 
 Only looking to crates published on crates.io
 
