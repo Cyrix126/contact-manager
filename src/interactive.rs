@@ -71,18 +71,21 @@ pub fn find_vcards(
 pub fn properties_by_name(vcard: &Vcard, property_find: &PropertyType) -> Vec<Property> {
     let mut properties = Vec::new();
     match property_find {
-        PropertyType::Fn | PropertyType::Name => {
+        PropertyType::Fn | PropertyType::Name | PropertyType::Uid => {
             if let Some(property) = vcard.get_property_by_name(property_find.to_name()) {
                 properties.push(property)
             }
         }
-        PropertyType::Adr | PropertyType::NickName | PropertyType::Tel | PropertyType::Email => {
-            properties.extend(
-                vcard
-                    .get_properties_by_name(property_find.to_name())
-                    .into_iter(),
-            )
-        }
+        PropertyType::Adr
+        | PropertyType::NickName
+        | PropertyType::Tel
+        | PropertyType::Email
+        | PropertyType::Org
+        | PropertyType::Url => properties.extend(
+            vcard
+                .get_properties_by_name(property_find.to_name())
+                .into_iter(),
+        ),
     }
     properties
 }
