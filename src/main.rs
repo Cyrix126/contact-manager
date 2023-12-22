@@ -174,6 +174,29 @@ fn edit(
     }
 }
 
+fn edit_x(
+    dir_contacts: PathBuf,
+    property_edit: &str,
+    property_edit_value: &str,
+    property_find: PropertyType,
+    value_find: &str,
+) {
+    let all = read_contacts(&dir_contacts);
+    if let Some(mut vcard) = find_one_vcard(all, &property_find, &value_find) {
+        let mut property = Property::PropertyXName(PropertyXNameData::default(property_edit));
+        property
+            .set_value(Value::from(ValueTextData::from(property_edit_value)))
+            .expect("Unable to set value.");
+        vcard
+            .set_property(&property)
+            .expect("Unable to update property.");
+        // écrire le vcard sur le fichier
+        let (file, _) = find_file_vcard(&dir_contacts, &vcard);
+        fs::write(file, vcard.to_string()).expect("Unable to write file.");
+    } else {
+        panic!("ne peux pas éditer un contact inexistant !")
+    }
+}
 fn delete(
     dir_book: PathBuf,
     dir_contacts: PathBuf,
@@ -325,6 +348,20 @@ fn main() {
         } => edit(
             find_path_book(&dir_books, book_name),
             property_edit,
+            &property_edit_value,
+            property_find,
+            &property_value,
+        ),
+        Commands::EditX {
+            //   book_name,
+            property_edit,
+            property_edit_value,
+            property_find,
+            property_value,
+            ..
+        } => edit_x(
+            find_path_book(&dir_books, book_name),
+            &property_edit,
             &property_edit_value,
             property_find,
             &property_value,

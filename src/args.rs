@@ -82,6 +82,18 @@ pub enum Commands {
         #[arg(value_name = "VALUE", required = true)]
         property_value: String,
     },
+    EditX {
+        //   #[arg(value_name = "BOOK NAME VALUE")]
+        //   book_name: String,
+        #[arg(value_name = "EDIT FIELD", required = true, value_enum)]
+        property_edit: String,
+        #[arg(value_name = "NEW VALUE", required = true)]
+        property_edit_value: String,
+        #[arg(value_name = "FIND FIELD", required = true, value_enum)]
+        property_find: PropertyType,
+        #[arg(value_name = "VALUE", required = true)]
+        property_value: String,
+    },
     Delete {
         #[arg(value_name = "FIND FIELD", required = true, value_enum)]
         property_find: PropertyType,
@@ -112,6 +124,9 @@ pub enum PropertyType {
     Email,
     NickName,
     Name,
+    Uid,
+    Url,
+    Org,
 }
 
 impl PropertyType {
@@ -123,6 +138,9 @@ impl PropertyType {
             PropertyType::Email => "EMAIL",
             PropertyType::NickName => "NICKNAME",
             PropertyType::Name => "N",
+            PropertyType::Uid => "UID",
+            PropertyType::Url => "URL",
+            PropertyType::Org => "ORG",
         }
     }
 }
