@@ -1,13 +1,22 @@
 [package]
 name = "contact-manager"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
-
+authors = ["Louis-Marie Baer <lm@baermail.fr>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
+[lib]
+name = "cm_lib"
+path = "src/lib/lib.rs"
+
+[[bin]]
+name = "cm"
+path = "src/bin/bin.rs"
+
 [dependencies]
-clap = { version = "4.2", features = ["derive"] }
-xdg = "2.5"
-vcard_parser = "0.2"
-symlink = "0.1.0"
-uuid = { version = "1.3.0", features = ["v4", "fast-rng"] }
+clap = { version = "4", features = ["derive"] }
+xdg = "2"
+vcard_parser = "0"
+uuid = { version = "1", features = ["v4", "fast-rng"] }
+thiserror = "1"

@@ -115,32 +115,3 @@ pub enum Commands {
         property: PropertyType,
     },
 }
-
-#[derive(Clone, Eq, PartialEq, ValueEnum)]
-pub enum PropertyType {
-    Fn,
-    Tel,
-    Adr,
-    Email,
-    NickName,
-    Name,
-    Uid,
-    Url,
-    Org,
-}
-
-impl PropertyType {
-    pub fn to_name(&self) -> &str {
-        match self {
-            PropertyType::Fn => "FN",
-            PropertyType::Tel => "TEL",
-            PropertyType::Adr => "ADR",
-            PropertyType::Email => "EMAIL",
-            PropertyType::NickName => "NICKNAME",
-            PropertyType::Name => "N",
-            PropertyType::Uid => "UID",
-            PropertyType::Url => "URL",
-            PropertyType::Org => "ORG",
-        }
-    }
-}
