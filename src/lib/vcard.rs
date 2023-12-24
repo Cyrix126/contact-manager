@@ -18,28 +18,29 @@ pub(crate) fn vcard_by_uuid(uuid: &Uuid) -> Result<Vcard, ErrorContactManager> {
 }
 pub(crate) fn find_first_vcard(
     content: &str,
-    property_find: &PropertyType,
-    parameters_find: Vec<Parameter>,
-    value_find: &str,
+    property_filter_type: &PropertyType,
+    property_filter_parameters: Vec<Parameter>,
+    property_filter_value: &str,
 ) -> Result<Vcard, ErrorContactManager> {
     let vcards = parse_vcards(content)?;
     for vcard in vcards {
-        for property in properties_by_name(&vcard, &property_find, &parameters_find) {
+        for property in properties_by(&vcard, &property_filter_type, &property_filter_parameters) {
             let value_present = property.get_value().to_string();
-            if value_present == value_find {
+            if value_present == property_filter_value {
                 return Ok(vcard);
             }
         }
     }
     Err(ErrorContactManager::Inexistant)
 }
-pub(crate) fn properties_by_name(
+pub(crate) fn properties_by(
     vcard: &Vcard,
-    property_search: &PropertyType,
-    parameters_find: &Vec<Parameter>,
+    property_show_type: &PropertyType,
+    property_show_parameters: &Vec<Parameter>,
 ) -> Vec<Property> {
     let mut properties = Vec::new();
-    match property_search {
+    let name_property = property_show_type.to_name();
+    match property_show_type {
         PropertyType::FN
         | PropertyType::UID
         | PropertyType::N
@@ -52,14 +53,14 @@ pub(crate) fn properties_by_name(
         | PropertyType::KIND
         | PropertyType::GENDER
         | PropertyType::ANNIVERSARY => {
-            if let Some(property) = vcard.get_property_by_name(property_search.to_name()) {
+            if let Some(property) = vcard.get_property_by_name(name_property) {
                 properties.push(property)
             }
         }
         _ => {
-            let mut properties = vcard.get_properties_by_name(property_search.to_name());
+            let mut properties = vcard.get_properties_by_name(name_property);
             properties.retain(|pr| {
-                for param in parameters_find {
+                for param in property_show_parameters {
                     if !pr.get_parameters().contains(&param) {
                         return false;
                     }
@@ -78,11 +79,14 @@ pub(crate) fn vcard_fn(vcard: &Vcard) -> String {
         .get_value()
         .to_string()
 }
-pub(crate) fn read_contacts(book_name: Option<&str>) -> Result<String, ErrorContactManager> {
+pub(crate) fn read_contacts(
+    book_name: Option<&str>,
+    app_name: &str,
+) -> Result<String, ErrorContactManager> {
     let dir = if let Some(book) = book_name {
-        book_directory(book)?
+        book_directory(book, app_name)?
     } else {
-        contacts_directory()?
+        contacts_directory(app_name)?
     };
     let files = fs::read_dir(dir)?;
     let mut all = String::new();
@@ -91,6 +95,8 @@ pub(crate) fn read_contacts(book_name: Option<&str>) -> Result<String, ErrorCont
     }
     Ok(all)
 }
+
+/// reimplementation of PropertyType with a ValueEnum to integrated in clap.
 #[derive(Clone, Eq, PartialEq, ValueEnum)]
 pub enum PropertyType {
     ADR,

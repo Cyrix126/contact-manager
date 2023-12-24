@@ -1,8 +1,11 @@
 use thiserror::Error;
 use vcard_parser::error::VcardError;
+use xdg::BaseDirectoriesError;
 /// Errors from the API
 #[derive(Error, Debug)]
 pub enum ErrorContactManager {
+    #[error("from basedirectories")]
+    BaseDirectory(#[from] BaseDirectoriesError),
     #[error("no vcard or found")]
     /// no vcard was not found for the search.
     Inexistant,
