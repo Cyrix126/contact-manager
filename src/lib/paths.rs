@@ -8,10 +8,11 @@ use crate::ErrorContactManager;
 /// return the default path of books directory, creating it if it does not exist.
 pub fn books_directory(app_name: &str) -> Result<PathBuf, ErrorContactManager> {
     let xdg_dirs = xdg::BaseDirectories::with_prefix(app_name)?;
-    Ok(xdg_dirs.place_data_file("books")?)
+    Ok(xdg_dirs.create_data_directory("books")?)
 }
 
-pub(crate) fn books_names(app_name: &str) -> Result<Vec<String>, ErrorContactManager> {
+/// will return the names of the available books.
+pub fn books_names(app_name: &str) -> Result<Vec<String>, ErrorContactManager> {
     let mut paths = Vec::new();
     let dirs = read_dir(books_directory(app_name)?)?;
     for dir in dirs {
@@ -27,7 +28,7 @@ pub(crate) fn books_names(app_name: &str) -> Result<Vec<String>, ErrorContactMan
 /// return the default path of contacts directory, creating it if it does not exist.
 pub fn contacts_directory(app_name: &str) -> Result<PathBuf, ErrorContactManager> {
     let xdg_dirs = xdg::BaseDirectories::with_prefix(app_name).unwrap();
-    Ok(xdg_dirs.place_data_file("contacts")?)
+    Ok(xdg_dirs.create_data_directory("contacts")?)
 }
 pub(crate) fn path_vcard_file_and_uid<'a>(
     vcard: &Vcard,

@@ -1,5 +1,5 @@
 use thiserror::Error;
-use vcard_parser::error::VcardError;
+use vcard_parser::{error::VcardError, vcard::Vcard};
 use xdg::BaseDirectoriesError;
 /// Errors from the API
 #[derive(Error, Debug)]
@@ -15,16 +15,26 @@ pub enum ErrorContactManager {
     #[error("error from Io")]
     /// An error from the filesystem occured.
     IoError(#[from] std::io::Error),
-    #[error("error from Uuid, a uuid parse failed. Verify the validity of the uuid")]
+    #[error(transparent)]
     /// An error from the filesystem occured.
     Uuid(#[from] uuid::Error),
-    #[error("error from vcard_parser library")]
+    #[error(transparent)]
     /// An error from the vcard_parser library occured.
     VcardError(VcardError),
+    #[error("error from vcard_parser library")]
+    /// An error from the vcard_parser library occured.
+    Try,
+    #[error("Import function can only import a file, not a directory.")]
+    ImportError,
 }
 
 impl From<VcardError> for ErrorContactManager {
     fn from(err: VcardError) -> Self {
         ErrorContactManager::VcardError(err)
     }
+}
+
+pub(crate) fn error_vcard_descriptive(vcard: &Vcard) -> String {
+    format!("The following vcard does not possess a valid property:\n{}\nModify manually or delete the contact and create it again\n",
+                    vcard.to_string())
 }

@@ -1,6 +1,6 @@
 [package]
 name = "contact-manager"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Louis-Marie Baer <lm@baermail.fr>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,11 +12,12 @@ path = "src/lib/lib.rs"
 
 [[bin]]
 name = "cm"
-path = "src/bin/bin.rs"
+path = "src/bin.rs"
 
 [dependencies]
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive", "cargo"] }
 xdg = "2"
-vcard_parser = "0"
+vcard_parser = { git="https://github.com/Cyrix126/vcard_parser"}
 uuid = { version = "1", features = ["v4", "fast-rng"] }
 thiserror = "1"
+anyhow = "1"
