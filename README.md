@@ -5,45 +5,49 @@
 
 ## Contact-Manager
 
-contact-manager (cm for short), is a command line contact manager written in rust using the library [vard_parser](https://crates.io/crates/vcard_parser).
+contact-manager (cm for short), is a [fast](../benchs), minimalist, powerfull and correct command line interface contact manager written in rust.
+
 It also expose his own high-level library for other crates to use.
 
 ### Overview
 
+cm is used to manage contacts manually or automaticly with address books. It can be integrated with softwares who need access to contacts, using the library or with the immediate mode binary.
 
-cm is used to manage contacts manually or automaticly and their address books. It can be integrated with softwares who need access to contacts using the public API or by the immediate mode and/or generation of index.
+cm is still in devellopement, but is actually useable. You can check the [ROADMAP](ROADMAP.md) to see the direction I intend to take for this sotfware and the [TODO](TODO.md) for more shortly features.
  
-Two modes are available from the command line:\
-
-#### Immediate mode
-
-Return result(s) after one command, made for alias command in terminal or for integration with other software who need access to a contact manager.\
-
-#### Interactive mode: 
-
-Interact with the user with prompts and menu to make the use more user friendly.\
-
 ### Features
+
+- [x] fast, power and correct contact-manager
+
+An inconveniance could be that if you try to use this programm with already existing vcards contact not following the spec, the programm could crash.
+
+If that's the case, the programm will tell you exacltly which vcard is wrong and why.
+
+Use the **import** function to be sure everything is valid.
 
 #### Immediate Mode
 
-- [x] create, find, modify and delete contact, filter by book
-- [x] create, rename, delete address book.
-- [x] search for any field by any field, filter by book
-- [x] edit any field by any field, filter by book
-- [ ] set priority of a field
-- [ ] delete a field
-- [x] generate index for other sotfware (such as an email client).
+- [x] prevent bad input from user.
+- [x] optional pretty output
+- [x] no input after execution, so very easy to alias or integrate to scripts.
+- [x] use a default book in case no books are specified.
+- [x] args to use easly the public functions of the library.
+- [ ] shell autocompletion generation
 
 #### Public API
 
-- [ ] create, find, modify and delete contact, filter by book
-- [ ] search for any field by any field, filter by book
-- [ ] edit any field by any field, filter by book
+- [x] import from file/directory
+- [x] export to file
+- [x] create/delete contact
+- [x] create/delete/rename address book.
+- [x] create/search/delete any property to vcard with any property with any logical operator
+- [x] generate index for other sotfware (such as an email client).
+- [x] filter by book
+- [x] forgiveable search
+- [x] contacts in books as links to save space and trouble.
 
 #### Interactive Mode
 
-- [x] forgiveable search with multiple finds.
 - [ ] menu for managing contacts.
 - [ ] presentation of a contacts.
 
@@ -54,48 +58,46 @@ Interact with the user with prompts and menu to make the use more user friendly.
 ### Usage
 
 
+You can use this software in multiple ways:
+
+- Alias to make quick commands.
+- Interactive interface, with menus.
+- Immediate Mode, to get all the powerfull options for one time use (if often used, consider making an alias making your life easier).
+- Integrate in sotfware using the included library.
+- Integrate in scripts calling the Immediate Mode binary directly.
+- Generate an index for uses in other sotwares. 
+
+
 ```cm --help``` 
 
 To get all available commands for immediate and interactive mode.
 
-#### Examples
 
-interactif mode, search for the phone of someone by their approximative fullname.
-```bash,ignore
-cm interact find-forgiveable tel fn Partialname
-```
+#### Integration for script
 
-with an alias, it could be made shorter to:
-```bash,ignore
-ct Partialname
-```
-Ajout d'un contact dans un carnet
-```bash,ignore
-cm immediate addto clients fn FullName
-```
-
-
-
+If using the binary in a script, do not use --pretty, as it can have unstable ouput depending on the number of results.\
+Instead, assume the first line for find-value result is always the uid, followed by the full string of a property. If multiples contacts have been found to have properties matched, a empty line seperate thoses.
 
 ### Technical details
 
 cm is using [vcard_parse](https://crates.io/crates/vcard_parser) to make all the parsing and saving of the vcard v4 format file.
 It manages the contacts in adressbooks with links to never have a contact file more than once on your storage device. So you have the main folder with all your contacts and one folder per addressbook which contains a link for every contacts in this book.
 
-cm will not let you input invalid data (will refuse for use of immediate mode or library, but guide the user in interactive mode), because it could be used for other software which need valid data. cm needs to be made friendly to those softwares.
+cm will not let you input invalid data (will refuse for use of immediate mode or library, but guide the user in interactive mode).
 
 All the saved contacts are in vcard format, which would enable you to use this programm whih a cardav syncroniser. (see [vdirsyncer-rs](https://git.sr.ht/~whynothugo/vdirsyncer-rs) for a work on that topic in rust).
 
+
+
 ### RFC
 
-[RFC6350 vCard Format Specification](https://datatracker.ietf.org/doc/html/rfc6350) thanks for vcard_parser.
+[RFC6350 vCard Format Specification](https://datatracker.ietf.org/doc/html/rfc6350) thanks for [vcard_parser](https://github.com/kenianbei/vcard_parser).
 
-[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/)
-Thanks to [xdg](https://docs.rs/xdg/latest/xdg/)
+[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/) Thanks to [xdg](https://docs.rs/xdg/latest/xdg/)
 
 ### Performance
 
-cm aims and is fast with immediate response from a human perspective. The first reason I began to write this software was because khard is bloated and slow.
+cm aims and is fast with immediate response from a human perspective. The first reason I began to write this software was because khard was bloated, slow and buggy.
 
 ### Security
 

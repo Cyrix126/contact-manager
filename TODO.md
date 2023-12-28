@@ -2,31 +2,25 @@
 
 ## Restructuration
 
-- [ ] delimit the code in library, immediate mode binary, interactive mode binary, tui binary.
+- [ ] expose vcard_parser though the library, so crates don't have to import it directly.
 
 ## Fonctionnality
 
-- [ ] set priority of a value.
-- [ ] delete value
-- [ ] make a public API for integration in source code
-- [ ] implement Promptable for a Contact representation of a file.
+- [ ] struct Contact, promptable feature.
 
 ## Documentation
 
-- [ ] write description for every functions.
 - [ ] enable scraping examples
-- [ ] rewrite README
 
 ## Examples
 
-- [ ] write usefull examples
+- [ ] write usefull examples of using in a programm
+- [ ] write example of alias
+- [ ] write example of using directly
 
 ## Tests
 
-- [ ] write tests 
+- [ ] write more tests 
 
 3/terminal user interface: utilisable sans commande
 
-# Intégration:
-
-- [ ] add a way to add a contact from neomutt
