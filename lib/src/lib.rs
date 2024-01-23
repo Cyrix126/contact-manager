@@ -9,20 +9,22 @@ mod error;
 pub mod paths;
 /// reimplement PropertyType with ValueEnum.
 pub mod vcard;
+use api_tools::generate_uid_property;
+use error::ErrorContactManager;
+use paths::{book_directory, books_names, path_vcard_file_and_uid, path_vcard_file_from_uuid};
 /// Name of the app for XDG directories.
 use std::{
     fs::{self, remove_file},
     os::unix::fs::symlink,
     path::Path,
 };
-
-use error::{error_vcard_descriptive, ErrorContactManager};
-use paths::{book_directory, books_names, path_vcard_file_and_uid, path_vcard_file_from_uuid};
+pub use uuid;
 use uuid::Uuid;
 use vcard::{
-    filter_vcards_by_properties, properties_show_from_vcards, read_contacts, vcard_uuid,
-    vcards_by_uuid, LogicalOperator,
+    filter_vcards_by_properties, properties_show_from_vcards, read_contacts, uuids_from_vcard,
+    vcard_uuid, vcards_by_uuid, LogicalOperator,
 };
+pub use vcard_parser;
 use vcard_parser::{
     parse_vcards,
     traits::HasValue,
@@ -42,22 +44,9 @@ pub fn find_uids(
     lo: &LogicalOperator,
     forgive: bool,
 ) -> Result<Vec<Uuid>, ErrorContactManager> {
-    let mut uuids = vec![];
     let vcards_all = read_contacts(book_name, app_name)?;
     let vcards = filter_vcards_by_properties(&vcards_all, filter_properties, forgive, lo)?;
-    let property_uuid = Property::PropertyUid(PropertyUidData::default());
-    for vcard in vcards {
-        uuids.push(
-            Uuid::parse_str(
-                &vcard
-                    .get_property_ref(&property_uuid)
-                    .expect(&error_vcard_descriptive(&vcard))
-                    .get_value()
-                    .to_string(),
-            )?, // .expect(&error_vcard_descriptive(&vcard)),
-        )
-    }
-    Ok(uuids)
+    Ok(uuids_from_vcard(vcards.iter().map(|v| v).collect()))
 }
 
 /// create a new address book with a name. The book will be empty.
@@ -107,15 +96,9 @@ pub fn create_contact(
         if filter_vcards_by_properties(&vcards, &vec![fn_property], false, &LogicalOperator::Or)?
             .is_empty()
         {
-            let uuid = Uuid::new_v4();
-            let mut property_uuid = Property::PropertyUid(PropertyUidData::default());
-            property_uuid.set_value(Value::ValueUri(
-                vcard_parser::vcard::value::value_uri::ValueUriData {
-                    value: uuid.to_string(),
-                },
-            ))?;
+            let (p_uuid, uuid) = generate_uid_property()?;
             let mut vcard = Vcard::new(&value_fn);
-            vcard.set_property(&property_uuid)?;
+            vcard.set_property(&p_uuid)?;
             let data = vcard.to_string();
             fs::write(path_vcard_file_and_uid(&vcard, None, app_name)?.0, data)?;
             uuids.push(uuid);
@@ -125,6 +108,27 @@ pub fn create_contact(
         }
     }
     Ok(uuids)
+}
+
+fn find_books_where_contact_is_present(
+    uuid: &Uuid,
+    app_name: &str,
+) -> Result<Vec<String>, ErrorContactManager> {
+    let mut books_find = Vec::new();
+    for b in books_names(app_name)? {
+        let vcards = read_contacts(Some(&b), app_name)?;
+
+        let mut property_uuid = Property::PropertyUid(PropertyUidData::default());
+        property_uuid.set_value(Value::ValueText(ValueTextData {
+            value: uuid.to_string(),
+        }))?;
+        if !filter_vcards_by_properties(&vcards, &vec![property_uuid], false, &LogicalOperator::Or)?
+            .is_empty()
+        {
+            books_find.push(b);
+        }
+    }
+    Ok(books_find)
 }
 /// delete a contact, removing it also from any book he was.
 pub fn delete_contacts(uuids: &Vec<Uuid>, app_name: &str) -> Result<(), ErrorContactManager> {
@@ -141,6 +145,7 @@ pub fn delete_contacts(uuids: &Vec<Uuid>, app_name: &str) -> Result<(), ErrorCon
     Ok(())
 }
 /// remove a contact from a book
+/// will remove the contact for the contacts folder if it doesn't exist in books anymore.
 pub fn remove_from_book(
     app_name: &str,
     book_name: &str,
@@ -150,6 +155,12 @@ pub fn remove_from_book(
         let file = path_vcard_file_from_uuid(&uuid, Some(book_name), app_name)?;
         if file.exists() {
             fs::remove_file(file)?;
+        }
+        // does contact still exist in other books ?
+        for uuid in uuids {
+            if find_books_where_contact_is_present(uuid, app_name)?.is_empty() {
+                delete_contacts(&vec![*uuid], app_name)?;
+            }
         }
     }
     Ok(())
@@ -189,13 +200,21 @@ pub fn find_properties(
     )?)
 }
 
+/// get all vcards from book
+pub fn vcards_from_book(
+    app_name: &str,
+    book_name: Option<&str>,
+) -> Result<Vec<Vcard>, ErrorContactManager> {
+    Ok(read_contacts(book_name, app_name)?)
+}
+
 /// add or replace if matches a property to first contact equal with anoter property value, filterable by book.
 /// you can precise the parameters
 /// if the PID match, it will replace the property.
 /// This function will return the set property including the pid number to allow replacing it.
 pub fn add_or_replace_property(
     app_name: &str,
-    properties_add: &Vec<Property>,
+    properties_add: &Vec<&Property>,
     uuids: &Vec<Uuid>,
 ) -> Result<Vec<(Uuid, Vec<Property>)>, ErrorContactManager> {
     let mut vcards = vcards_by_uuid(uuids, app_name)?;
@@ -217,7 +236,7 @@ pub fn add_or_replace_property(
 /// delete properties for every contacts matched with uuids.
 pub fn delete_properties(
     app_name: &str,
-    property_delete: &Vec<Property>,
+    property_delete: &Vec<&Property>,
     uuids: &Vec<Uuid>,
 ) -> Result<(), ErrorContactManager> {
     let mut vcards = vcards_by_uuid(&uuids, app_name)?;

@@ -8,10 +8,10 @@ use clap::crate_name;
 use clap::crate_version;
 use clap::Args;
 use clap::{Parser, Subcommand};
-use cm_lib::paths::books_directory;
-use cm_lib::paths::books_names;
-use cm_lib::vcard::LogicalOperator;
-use vcard_parser::vcard::property::Property;
+use contact_manager::paths::books_directory;
+use contact_manager::paths::books_names;
+use contact_manager::vcard::LogicalOperator;
+use contact_manager::vcard_parser::vcard::property::Property;
 
 use crate::APP_SHORTNAME;
 #[derive(Parser)]
@@ -177,7 +177,7 @@ pub enum ImmediateMode {
 
 fn convert_str_to_property(str: &str) -> Result<Property> {
     let mut str_eol = str.to_owned();
-    str_eol.push_str("\n");
+    str_eol.push('\n');
     Ok(Property::create_from_str(&str_eol)?)
 }
 
@@ -193,7 +193,7 @@ fn book_name_parser(str: &str) -> Result<String> {
     bail!("the book name \"{str}\" doesn't exist in the directory {}, you can create it with create-book.\nPresent book names:\n{}", books_directory(APP_SHORTNAME)?.display(), names.join("\n"))
 }
 
-fn book_new_name_parser(str: &str) -> Result<String> {
+pub fn book_new_name_parser(str: &str) -> Result<String> {
     let names = books_names(APP_SHORTNAME)?;
     let string = str.to_string();
         if !names.contains(&string) {

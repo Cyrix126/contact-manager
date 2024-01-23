@@ -3,6 +3,7 @@ use std::{fs, path::PathBuf};
 use clap::ValueEnum;
 use uuid::Uuid;
 use vcard_parser::{
+    constants::PropertyName,
     parse::property::property,
     parse_vcards,
     traits::{HasName, HasValue},
@@ -17,6 +18,9 @@ use crate::{
     paths::{book_directory, contacts_directory},
     ErrorContactManager,
 };
+/// Property that the user should not have write access to for simplicity.
+pub const PROPERTY_NO_MODIFICATION_BY_USER: [&str; 4] = ["REV", "UID", "BEGIN", "END"];
+
 /// finding vcards by uuids, read directly the file with the uuid name instead of parsing every contacts like read_contacts.
 pub(crate) fn vcards_by_uuid(
     uuids: &Vec<Uuid>,
@@ -133,7 +137,15 @@ pub(crate) fn read_contacts(
 fn check_validity_vcards(paths: &Vec<PathBuf>) -> Result<Vec<Vcard>, ErrorContactManager> {
     let mut all = String::new();
     for p in paths {
-        all.push_str(&fs::read_to_string(&p)?)
+        match &fs::read_to_string(&p) {
+            Ok(s) => all.push_str(s),
+            Err(e) => {
+                eprintln!(
+                    "maybe invalid link if contact was deleted manually ? {:?}, {:?}",
+                    p, e
+                )
+            }
+        };
     }
 
     match parse_vcards(&all) {
@@ -250,4 +262,20 @@ pub(crate) fn path_vcards(
     } else {
         contacts_directory(app_name)
     }
+}
+
+/// find uuid value of vcard
+pub fn uuids_from_vcard(vcards: Vec<&Vcard>) -> Vec<Uuid> {
+    vcards
+        .iter()
+        .map(|v| {
+            Uuid::try_parse(
+                &v.get_property_by_name(PropertyName::UID)
+                    .expect("UID is not present when it should")
+                    .get_value()
+                    .to_string(),
+            )
+            .expect("UID value is malformed")
+        })
+        .collect()
 }

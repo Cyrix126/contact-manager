@@ -1,20 +1,24 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use args::Book;
 use args::{Cli, ImmediateMode};
 use clap::Parser;
-use cm_lib::delete_book;
-use cm_lib::delete_contacts;
-use cm_lib::find_properties;
-use cm_lib::find_uids;
-use cm_lib::paths::books_directory;
-use cm_lib::remove_from_book;
-use cm_lib::{add_or_replace_property, generate_index};
-use cm_lib::{add_to_book, rename_book};
-use cm_lib::{create_book, import};
-use cm_lib::{create_contact, export};
-use vcard_parser::traits::HasValue;
-use vcard_parser::vcard::property::Property;
+use contact_manager::delete_book;
+use contact_manager::delete_contacts;
+use contact_manager::find_properties;
+use contact_manager::find_uids;
+use contact_manager::paths::books_directory;
+use contact_manager::remove_from_book;
+use contact_manager::vcard_parser::traits::HasValue;
+use contact_manager::vcard_parser::vcard::property::Property;
+use contact_manager::{add_or_replace_property, generate_index};
+use contact_manager::{add_to_book, rename_book};
+use contact_manager::{create_book, create_contact, export, import};
+use promptable::basics::display::clear_screen;
+use promptable::basics::promptable::Promptable;
+use promptable::inspect::Inspectable;
 mod args;
+#[cfg(feature = "interact")]
+mod interactive;
 pub const APP_SHORTNAME: &str = "cm";
 fn main() -> Result<()> {
     // directory with all contacts files is contacts
@@ -25,7 +29,6 @@ fn main() -> Result<()> {
     let mut default_book = dir_books;
     default_book.push("default");
     std::fs::create_dir_all(default_book)?;
-
     // parse command line arguments.
     let args = Cli::parse();
 
@@ -37,8 +40,58 @@ fn main() -> Result<()> {
 fn actions(cli: Cli) -> Result<()> {
     if let Some(args) = cli.immediate_mode {
         immediate_mode(args)?
+    } else {
+        // if no immediate mode, go in interactive mode.
+
+        if cfg!(feature = "interact") {
+            #[cfg(feature = "interact")]
+            interact_mode()?;
+        } else {
+            bail!("no argument given and the binary has not been build whith the feature \"interact\"");
+        }
+        clear_screen();
     }
     Ok(())
+}
+#[cfg(feature = "interact")]
+fn interact_mode() -> Result<()> {
+    use crate::interactive::book::VecBook;
+    use contact_manager::paths::books_names;
+    use contact_manager::vcards_from_book;
+    use inquire::Select;
+    use interactive::book::Book as PromptBook;
+    use interactive::contact::{Contact, VecContact, WrapperVcard};
+    // get books structs
+    let mut books = VecBook(Vec::new());
+    for book in books_names(APP_SHORTNAME)? {
+        books.push(PromptBook {
+            contacts: VecContact(
+                vcards_from_book(APP_SHORTNAME, Some(&book))?
+                    .into_iter()
+                    .map(|v| Contact {
+                        vcard: WrapperVcard(v),
+                    })
+                    .collect(),
+            ),
+            name: book,
+        });
+    }
+    let options = vec!["Manage", "Inspect", "Quit"];
+    loop {
+        clear_screen();
+        if let Some(choice) = Select::new("Contact-Manager", options.clone()).prompt_skippable()? {
+            match choice {
+                "Manage" => books.modify_by_prompt(())?,
+                "Inspect" => VecBook::inspect_menu(&books)?,
+                _ => break,
+            }
+        }
+    }
+    Ok(())
+    // option to modify book and contacts. Adding a client suggest to add from another book or to create one.
+    // deleting a contact from a book will delete it completly if it is not in any other books.
+    // option to inspect book.
+    // manage contacts and books
 }
 
 fn immediate_mode(args: ImmediateMode) -> Result<()> {
@@ -52,7 +105,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
             let book_default = Book::default();
             create_contact(
                 APP_SHORTNAME,
-                &book.as_ref().unwrap_or_else(|| &book_default).name,
+                &book.as_ref().unwrap_or(&book_default).name,
                 &value_fn,
             )?;
             Ok(())
@@ -62,11 +115,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
             find_filters,
             lo,
         } => {
-            let book_name = if let Some(b) = &book {
-                Some(b.name.as_str())
-            } else {
-                None
-            };
+            let book_name = book.as_ref().map(|b| b.name.as_str());
             Ok(delete_contacts(
                 &find_uids(
                     APP_SHORTNAME,
@@ -120,7 +169,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
                 &show_filter.show,
                 &find_uids(
                     APP_SHORTNAME,
-                    book_name(&book).as_deref(),
+                    book_name(&book),
                     &find_filters.filter,
                     &lo.operator,
                     find_filters.forgive,
@@ -132,13 +181,13 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
             let len = uid_properties.len() - 1;
             if !pretty {
                 for (nb, up) in uid_properties.into_iter().enumerate() {
-                    println!("{}", up.0.to_string());
+                    println!("{}", up.0);
                     for p in up.1 {
-                        let p = p.to_string().replace("\n", "");
+                        let p = p.to_string().replace('\n', "");
                         println!("{p}")
                     }
                     if nb < len {
-                        println!("");
+                        println!();
                     }
                 }
             } else if len == 0 {
@@ -162,7 +211,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
                         println!("{}", p.get_value());
                     }
                     if nb < len {
-                        println!("");
+                        println!();
                     }
                 }
             }
@@ -177,10 +226,10 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
         } => {
             add_or_replace_property(
                 APP_SHORTNAME,
-                &properties.show,
+                &properties.show.iter().map(|p| p).collect(),
                 &find_uids(
                     APP_SHORTNAME,
-                    book_name(&book).as_deref(),
+                    book_name(&book),
                     &find_filters.filter,
                     &lo.operator,
                     find_filters.forgive,
@@ -196,7 +245,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
         } => {
             add_or_replace_property(
                 APP_SHORTNAME,
-                &properties.show,
+                &properties.show.iter().map(|p| p).collect(),
                 &find_uids(
                     APP_SHORTNAME,
                     book_name(&book),
@@ -208,11 +257,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
             Ok(())
         }
         ImmediateMode::GenerateIndex { book, properties } => {
-            let index = generate_index(
-                APP_SHORTNAME,
-                book_name(&book).as_deref(),
-                &properties.filter,
-            )?;
+            let index = generate_index(APP_SHORTNAME, book_name(&book), &properties.filter)?;
             println!("{}", index.join("\n"));
             Ok(())
         }
@@ -224,7 +269,7 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
             Ok(())
         }
         ImmediateMode::Export { book } => {
-            println!("{}", export(book_name(&book).as_deref(), APP_SHORTNAME)?);
+            println!("{}", export(book_name(&book), APP_SHORTNAME)?);
             Ok(())
         }
     }

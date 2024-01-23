@@ -1,5 +1,5 @@
 use thiserror::Error;
-use vcard_parser::{error::VcardError, vcard::Vcard};
+use vcard_parser::error::VcardError;
 use xdg::BaseDirectoriesError;
 /// Errors from the API
 #[derive(Error, Debug)]
@@ -34,7 +34,7 @@ impl From<VcardError> for ErrorContactManager {
     }
 }
 
-pub(crate) fn error_vcard_descriptive(vcard: &Vcard) -> String {
-    format!("The following vcard does not possess a valid property:\n{}\nModify manually or delete the contact and create it again\n",
-                    vcard.to_string())
-}
+// fn error_vcard_descriptive(vcard: &Vcard) -> String {
+//     format!("The following vcard does not possess a valid property:\n{}\nModify manually or delete the contact and create it again\n",
+//                     vcard.to_string())
+// }
