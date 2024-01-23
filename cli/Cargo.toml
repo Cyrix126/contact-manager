@@ -10,7 +10,7 @@ contact-manager = {path = "../lib"}
 clap = { version = "4", features = ["derive", "cargo"] }
 anyhow = "1"
 inquire = {git="https://github.com/Cyrix126/inquire-time", optional=true}
-promptable = {path="/home/lm/git/promptable/promptable", optional=true}
+promptable = {git="https://github.com/Cyrix126/promptable", optional=true}
 [features]
 default = ["interact"]
 interact = ["dep:inquire", "dep:promptable"]
