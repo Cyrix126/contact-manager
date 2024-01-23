@@ -48,8 +48,8 @@ Use the **import** function to be sure everything is valid.
 
 #### Interactive Mode
 
-- [ ] menu for managing contacts.
-- [ ] presentation of a contacts.
+- [x] menu for managing contacts and books.
+- [x] presentation of a contacts.
 
 #### TUI
 
