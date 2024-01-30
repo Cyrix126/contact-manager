@@ -1,6 +1,5 @@
 use std::{fs, path::PathBuf};
 
-use clap::ValueEnum;
 use uuid::Uuid;
 use vcard_parser::{
     constants::PropertyName,
@@ -169,8 +168,11 @@ fn check_validity_vcards(paths: &Vec<PathBuf>) -> Result<Vec<Vcard>, ErrorContac
         }
     };
 }
+#[cfg(feature = "clap")]
+use clap::ValueEnum;
 /// Logic Operator.
-#[derive(ValueEnum, Clone, Default, Debug)]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
+#[derive(Clone, Default, Debug)]
 pub enum LogicalOperator {
     /// Property AND Property must be present
     #[default]
@@ -234,8 +236,14 @@ pub fn property_match(
     }
 
     // if a value of Property has been given, compare it with the one of vcard.
-
-    if !a.get_value().to_string().is_empty() {
+    // remove separators if any.
+    if !a
+        .get_value()
+        .to_string()
+        .replace(",", "")
+        .replace(";", "")
+        .is_empty()
+    {
         if forgive {
             if !b
                 .get_value()

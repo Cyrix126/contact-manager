@@ -1,5 +1,5 @@
 use anyhow::Result;
-use contact_manager::{
+use contact_manager_lib::{
     api_tools::cardinals,
     paths::{books_directory, books_names},
     vcard_parser::{

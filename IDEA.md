@@ -11,3 +11,6 @@ Prompts must guide user to set a valid value for each different possible value.
 ## Integrate with neomutt
 
 Put example of how to configure neomutt to use the generation of index and how to add a contact from an email.
+
+
+## Args to shortcut the prompts and be at a specific menu.

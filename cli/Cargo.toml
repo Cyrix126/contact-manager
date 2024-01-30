@@ -1,16 +1,17 @@
 [package]
 name = "contact-manager-cli"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-contact-manager = {path = "../lib"}
+contact-manager-lib = {path = "../lib", features=["clap"]}
 clap = { version = "4", features = ["derive", "cargo"] }
 anyhow = "1"
 inquire = {git="https://github.com/Cyrix126/inquire-time", optional=true}
 promptable = {git="https://github.com/Cyrix126/promptable", optional=true}
+clap_shortcuts = {git="https://github.com/Cyrix126/clap_shortcuts", optional=true, features=["derive"]}
 [features]
 default = ["interact"]
-interact = ["dep:inquire", "dep:promptable"]
+interact = ["dep:inquire", "dep:promptable", "dep:clap_shortcuts"]

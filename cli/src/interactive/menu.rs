@@ -1,6 +1,6 @@
 use crate::{interactive::custom_input::input_value, APP_SHORTNAME};
 use anyhow::Result;
-use contact_manager::{
+use contact_manager_lib::{
     add_or_replace_property,
     api_tools::remove_parameters,
     delete_properties,

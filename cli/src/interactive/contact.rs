@@ -4,15 +4,21 @@ use crate::interactive::menu::menu_properties;
 use crate::APP_SHORTNAME;
 
 use anyhow::Result;
-use contact_manager::api_tools::generate_uid_property;
+use contact_manager_lib::{
+    add_to_book,
+    api_tools::generate_uid_property,
+    create_contact,
+    paths::books_names,
+    remove_from_book,
+    vcard::uuids_from_vcard,
+    vcard_parser::{
+        constants::PropertyName,
+        traits::HasValue,
+        vcard::{property::Property, Vcard},
+    },
+    vcards_from_book,
+};
 
-use contact_manager::paths::books_names;
-use contact_manager::vcard::uuids_from_vcard;
-use contact_manager::vcard_parser::constants::PropertyName;
-use contact_manager::vcard_parser::traits::HasValue;
-use contact_manager::vcard_parser::vcard::property::Property;
-use contact_manager::vcard_parser::vcard::Vcard;
-use contact_manager::{add_to_book, create_contact, remove_from_book, vcards_from_book};
 use inquire::{Select, Text};
 
 use promptable::derive_more::{Deref, DerefMut};

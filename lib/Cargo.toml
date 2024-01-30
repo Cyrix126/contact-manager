@@ -1,6 +1,6 @@
 [package]
-name = "contact-manager"
-version = "0.4.0"
+name = "contact-manager-lib"
+version = "0.5.0"
 edition = "2021"
 authors = ["Louis-Marie Baer <lm@baermail.fr>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,8 +10,8 @@ xdg = "2"
 vcard_parser = "0.2.2"
 uuid = { version = "1", features = ["v4", "fast-rng"] }
 thiserror = "1"
-clap = { version = "4", features = ["derive"], optional=true}
+clap = { version = "4", default-features=false, features=["derive", "std"], optional=true}
 
 [features]
-default = ["clap"]
+default = []
 clap = ["dep:clap"]

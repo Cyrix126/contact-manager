@@ -2,17 +2,15 @@ use anyhow::{bail, Context, Result};
 use args::Book;
 use args::{Cli, ImmediateMode};
 use clap::Parser;
-use contact_manager::delete_book;
-use contact_manager::delete_contacts;
-use contact_manager::find_properties;
-use contact_manager::find_uids;
-use contact_manager::paths::books_directory;
-use contact_manager::remove_from_book;
-use contact_manager::vcard_parser::traits::HasValue;
-use contact_manager::vcard_parser::vcard::property::Property;
-use contact_manager::{add_or_replace_property, generate_index};
-use contact_manager::{add_to_book, rename_book};
-use contact_manager::{create_book, create_contact, export, import};
+use contact_manager_lib::{
+    add_or_replace_property, add_to_book, create_book, create_contact, delete_book,
+    delete_contacts, export, find_properties, find_uids, generate_index, import,
+    paths::books_directory,
+    remove_from_book, rename_book,
+    vcard_parser::{traits::HasValue, vcard::property::Property},
+};
+#[cfg(feature = "interact")]
+use interactive::book::ShortCutArgBook;
 use promptable::basics::display::clear_screen;
 use promptable::basics::promptable::Promptable;
 use promptable::inspect::Inspectable;
@@ -39,29 +37,50 @@ fn main() -> Result<()> {
 
 fn actions(cli: Cli) -> Result<()> {
     if let Some(args) = cli.immediate_mode {
-        immediate_mode(args)?
+        immediate_mode(args)?;
+    } else if !cfg!(feature = "interact") {
+        bail!("no argument given and the binary has not been build whith the feature \"interact\"");
     } else {
-        // if no immediate mode, go in interactive mode.
-
-        if cfg!(feature = "interact") {
-            #[cfg(feature = "interact")]
-            interact_mode()?;
-        } else {
-            bail!("no argument given and the binary has not been build whith the feature \"interact\"");
-        }
-        clear_screen();
+        #[cfg(feature = "interact")]
+        interact_mode()?;
     }
     Ok(())
 }
+
+#[cfg(feature = "interact")]
+fn shortcut_book(s: ShortCutArgBook, book_name: String) -> Result<()> {
+    use clap_shortcuts::ShortCuts;
+    use contact_manager_lib::vcards_from_book;
+    use interactive::book::Book as PromptBook;
+    use interactive::contact::{Contact, VecContact, WrapperVcard};
+    if let Some(s) = s.shortcut_mut {
+        let mut book = PromptBook {
+            contacts: VecContact(
+                vcards_from_book(APP_SHORTNAME, Some(&book_name))?
+                    .into_iter()
+                    .map(|v| Contact {
+                        vcard: WrapperVcard(v),
+                    })
+                    .collect(),
+            ),
+            name: book_name,
+        };
+        book.shortcut_mut(&s, ())?;
+    }
+    Ok(())
+}
+
 #[cfg(feature = "interact")]
 fn interact_mode() -> Result<()> {
     use crate::interactive::book::VecBook;
-    use contact_manager::paths::books_names;
-    use contact_manager::vcards_from_book;
+    use contact_manager_lib::paths::books_names;
+    use contact_manager_lib::vcards_from_book;
     use inquire::Select;
     use interactive::book::Book as PromptBook;
     use interactive::contact::{Contact, VecContact, WrapperVcard};
     // get books structs
+
+    let options = vec!["Manage", "Inspect", "Quit"];
     let mut books = VecBook(Vec::new());
     for book in books_names(APP_SHORTNAME)? {
         books.push(PromptBook {
@@ -76,12 +95,13 @@ fn interact_mode() -> Result<()> {
             name: book,
         });
     }
-    let options = vec!["Manage", "Inspect", "Quit"];
     loop {
         clear_screen();
         if let Some(choice) = Select::new("Contact-Manager", options.clone()).prompt_skippable()? {
             match choice {
-                "Manage" => books.modify_by_prompt(())?,
+                "Manage" => {
+                    books.modify_by_prompt(())?;
+                }
                 "Inspect" => VecBook::inspect_menu(&books)?,
                 _ => break,
             }
@@ -178,6 +198,9 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
                 find_filters.forgive,
             )?;
             // rendu
+            if uid_properties.is_empty() {
+                return Ok(());
+            }
             let len = uid_properties.len() - 1;
             if !pretty {
                 for (nb, up) in uid_properties.into_iter().enumerate() {
@@ -264,14 +287,16 @@ fn immediate_mode(args: ImmediateMode) -> Result<()> {
         ImmediateMode::Import {
             path_vcards_file,
             book,
-        } => {
-            import(&path_vcards_file, &book.unwrap_or_default(), APP_SHORTNAME)?;
-            Ok(())
-        }
+        } => Ok(import(
+            &path_vcards_file,
+            &book.unwrap_or_default(),
+            APP_SHORTNAME,
+        )?),
         ImmediateMode::Export { book } => {
-            println!("{}", export(book_name(&book), APP_SHORTNAME)?);
-            Ok(())
+            Ok(println!("{}", export(book_name(&book), APP_SHORTNAME)?))
         }
+
+        ImmediateMode::Shortcut { shortcut, book } => Ok(shortcut_book(shortcut, book.name)?),
     }
 }
 

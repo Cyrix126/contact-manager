@@ -8,18 +8,20 @@ use clap::crate_name;
 use clap::crate_version;
 use clap::Args;
 use clap::{Parser, Subcommand};
-use contact_manager::paths::books_directory;
-use contact_manager::paths::books_names;
-use contact_manager::vcard::LogicalOperator;
-use contact_manager::vcard_parser::vcard::property::Property;
+use contact_manager_lib::paths::books_directory;
+use contact_manager_lib::paths::books_names;
+use contact_manager_lib::vcard::LogicalOperator;
+use contact_manager_lib::vcard_parser::vcard::property::Property;
 
 use crate::APP_SHORTNAME;
+use crate::interactive::book::ShortCutArgBook;
 #[derive(Parser)]
 #[command(name = crate_name!())]
 #[command(author = crate_authors!())]
 #[command(version = crate_version!())]
 #[command(about = crate_description!(), long_about = None)]
 #[command(next_line_help = true)]
+#[group(required = false, multiple = false)]
 pub struct Cli {
     #[command(subcommand)]
     pub immediate_mode: Option<ImmediateMode>,
@@ -172,10 +174,20 @@ pub enum ImmediateMode {
     Export {
         #[command(flatten)]
         book: Option<Book>,
-    }
+    },
+    #[cfg(feature = "interact")]
+    Shortcut {
+    #[clap(flatten)]
+    shortcut: ShortCutArgBook,
+    #[clap(flatten)]
+    book: Book
+}
 }
 
 fn convert_str_to_property(str: &str) -> Result<Property> {
+    if !str.contains(":") {
+        return Ok(Property::default(str))
+    }
     let mut str_eol = str.to_owned();
     str_eol.push('\n');
     Ok(Property::create_from_str(&str_eol)?)

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use contact_manager::vcard_parser::{
+    use contact_manager_lib::vcard_parser::{
         traits::HasValue,
         vcard::{
             property::{property_adr::PropertyAdrData, Property},

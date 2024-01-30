@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use contact_manager::vcard_parser::traits::{HasName, HasParameters, HasValue};
+use contact_manager_lib::vcard_parser::traits::{HasName, HasParameters, HasValue};
 use promptable::basics::display::PromptableDisplay;
 
 use super::{

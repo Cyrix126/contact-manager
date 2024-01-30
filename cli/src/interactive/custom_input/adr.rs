@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
-use contact_manager::vcard_parser::traits::HasValue;
-use contact_manager::vcard_parser::vcard::property::property_adr::PropertyAdrData;
-use contact_manager::vcard_parser::vcard::value::value_listcomponent::ValueListComponentData;
-use contact_manager::vcard_parser::vcard::value::Value;
+use contact_manager_lib::vcard_parser::traits::HasValue;
+use contact_manager_lib::vcard_parser::vcard::property::property_adr::PropertyAdrData;
+use contact_manager_lib::vcard_parser::vcard::value::value_listcomponent::ValueListComponentData;
+use contact_manager_lib::vcard_parser::vcard::value::Value;
 use promptable::promptable_derive::Promptable;
 // use promptable::Promptable;
 
