@@ -72,7 +72,7 @@ fn menu_properties_add(contact: &mut Contact) -> Result<()> {
                 &vec![property],
                 &vec![Uuid::parse_str(
                     &contact
-                        .get_property_by_name("UUID")
+                        .get_property_by_name("UID")
                         .unwrap()
                         .get_value()
                         .to_string(),
@@ -113,7 +113,7 @@ fn menu_properties_modify(contact: &mut Contact) -> Result<()> {
                             &vec![&property],
                             &vec![Uuid::parse_str(
                                 &contact
-                                    .get_property_by_name("UUID")
+                                    .get_property_by_name("UID")
                                     .unwrap()
                                     .get_value()
                                     .to_string(),
@@ -143,7 +143,7 @@ fn menu_properties_delete(contact: &mut Contact) -> Result<()> {
             &vp.iter().map(|p| p).collect(),
             &vec![Uuid::parse_str(
                 &contact
-                    .get_property_by_name("UUID")
+                    .get_property_by_name("UID")
                     .unwrap()
                     .get_value()
                     .to_string(),
