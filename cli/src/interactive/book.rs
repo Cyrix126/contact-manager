@@ -8,6 +8,7 @@ use contact_manager_lib::{create_book, delete_book, rename_book};
 use inquire::{Select, Text};
 use promptable::derive_more::Display;
 use promptable::promptable_derive::Promptable;
+use promptable::termion::screen::ToMainScreen;
 #[derive(Promptable, Clone, Display, ShortCuts)]
 #[display(fmt = "Book {}: {}", name, "contacts.len()")]
 #[prompt(trigger_del = "book_del(deleted)?")]
@@ -71,12 +72,14 @@ fn select_contact(contacts: &VecContact) -> Result<()> {
     if let Some(c) =
         Select::new("Select a contact to get the uuid", contacts.to_vec()).prompt_skippable()?
     {
+        print!("{}", ToMainScreen);
         println!("{}", uuids_from_vcard(vec![&c])[0]);
     }
     Ok(())
 }
 fn add_contact(contacts: &mut VecContact, book_name: &str) -> Result<()> {
     if contacts.add_by_prompt_vec(book_name)? {
+        print!("{}", ToMainScreen);
         println!(
             "{}",
             uuids_from_vcard(vec![&contacts.last().expect(

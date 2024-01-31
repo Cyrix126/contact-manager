@@ -53,25 +53,34 @@ fn shortcut_book(s: ShortCutArgBook, book_name: String) -> Result<()> {
     use contact_manager_lib::vcards_from_book;
     use interactive::book::Book as PromptBook;
     use interactive::contact::{Contact, VecContact, WrapperVcard};
+    use promptable::termion::screen::{ToAlternateScreen, ToMainScreen};
+    let mut book = PromptBook {
+        contacts: VecContact(
+            vcards_from_book(APP_SHORTNAME, Some(&book_name))?
+                .into_iter()
+                .map(|v| Contact {
+                    vcard: WrapperVcard(v),
+                })
+                .collect(),
+        ),
+        name: book_name,
+    };
+    print!("{}", ToAlternateScreen);
+    clear_screen();
     if let Some(s) = s.shortcut_mut {
-        let mut book = PromptBook {
-            contacts: VecContact(
-                vcards_from_book(APP_SHORTNAME, Some(&book_name))?
-                    .into_iter()
-                    .map(|v| Contact {
-                        vcard: WrapperVcard(v),
-                    })
-                    .collect(),
-            ),
-            name: book_name,
-        };
         book.shortcut_mut(&s, ())?;
+    } else if let Some(s) = s.shortcut_ref {
+        book.shortcut_ref(&s, ())?;
     }
+    print!("{}", ToMainScreen);
     Ok(())
 }
 
 #[cfg(feature = "interact")]
 fn interact_mode() -> Result<()> {
+    use promptable::termion::screen::{ToAlternateScreen, ToMainScreen};
+    print!("{}", ToAlternateScreen);
+    clear_screen();
     use crate::interactive::book::VecBook;
     use contact_manager_lib::paths::books_names;
     use contact_manager_lib::vcards_from_book;
@@ -96,8 +105,11 @@ fn interact_mode() -> Result<()> {
         });
     }
     loop {
-        clear_screen();
-        if let Some(choice) = Select::new("Contact-Manager", options.clone()).prompt_skippable()? {
+        // clear_screen();
+        if let Some(choice) = Select::new("Contact-Manager\n", options.clone())
+            .without_filtering()
+            .prompt_skippable()?
+        {
             match choice {
                 "Manage" => {
                     books.modify_by_prompt(())?;
@@ -107,6 +119,7 @@ fn interact_mode() -> Result<()> {
             }
         }
     }
+    print!("{}", ToMainScreen);
     Ok(())
     // option to modify book and contacts. Adding a client suggest to add from another book or to create one.
     // deleting a contact from a book will delete it completly if it is not in any other books.

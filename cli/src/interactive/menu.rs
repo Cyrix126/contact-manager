@@ -30,8 +30,9 @@ pub fn menu_properties(contact: &mut Contact) -> Result<()> {
     let restore_contact = contact.clone();
     loop {
         println!("{}", contact.display_human());
-        if let Some(choix) =
-            Select::new("Action on Property:", options.clone()).prompt_skippable()?
+        if let Some(choix) = Select::new("Action on Property:\n", options.clone())
+            .without_filtering()
+            .prompt_skippable()?
         {
             match choix {
                 MenuClassic::ADD => menu_properties_add(contact)?,
@@ -209,7 +210,10 @@ fn menu_params(property: &mut Property) -> Result<()> {
     let property_restore = property.clone();
     let options = MenuClassic::consts().to_vec();
     loop {
-        if let Some(c) = Select::new("Choice for Parameters", options.clone()).prompt_skippable()? {
+        if let Some(c) = Select::new("Choice for Parameters:\n", options.clone())
+            .without_filtering()
+            .prompt_skippable()?
+        {
             match c {
                 MenuClassic::ADD => menu_params_add(property)?,
                 MenuClassic::MODIFY => menu_params_modify(property)?,
