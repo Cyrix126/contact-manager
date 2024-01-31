@@ -36,9 +36,7 @@ impl Display for Adress {
         };
         write!(
             f,
-            "
-               {};{};{};{};{};{};{} 
-            ",
+            "{};{};{};{};{};{};{}",
             self.post_office_box.as_ref().unwrap_or(&String::new()),
             suite_display,
             self.street_adress,
@@ -76,8 +74,8 @@ impl Adress {
     pub fn to_property_value(&self) -> Value {
         Value::ValueListComponent(ValueListComponentData::try_from((
             self.to_string().as_str(),
-            ',',
             ';',
+            ',',
         )).expect("should not panic here because Adress to string should be a correct string t obe converted to PropertyAdrData"))
     }
 }

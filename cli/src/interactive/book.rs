@@ -3,7 +3,7 @@ use super::validator_new_bookname;
 use crate::APP_SHORTNAME;
 use anyhow::{bail, Result};
 use clap_shortcuts::clap_shortcuts_derive::ShortCuts;
-use contact_manager_lib::vcard::uuids_from_vcard;
+use contact_manager_lib::vcard::uuids_from_vcards;
 use contact_manager_lib::{create_book, delete_book, rename_book};
 use inquire::{Select, Text};
 use promptable::derive_more::Display;
@@ -73,7 +73,7 @@ fn select_contact(contacts: &VecContact) -> Result<()> {
         Select::new("Select a contact to get the uuid", contacts.to_vec()).prompt_skippable()?
     {
         print!("{}", ToMainScreen);
-        println!("{}", uuids_from_vcard(vec![&c])[0]);
+        println!("{}", uuids_from_vcards(&vec![&c])?[0]);
     }
     Ok(())
 }
@@ -82,9 +82,9 @@ fn add_contact(contacts: &mut VecContact, book_name: &str) -> Result<()> {
         print!("{}", ToMainScreen);
         println!(
             "{}",
-            uuids_from_vcard(vec![&contacts.last().expect(
+            uuids_from_vcards(&vec![&contacts.last().expect(
                 "should have at least one contact because add_by_prompt_vec returned true"
-            )])[0]
+            )])?[0]
         );
     }
     Ok(())

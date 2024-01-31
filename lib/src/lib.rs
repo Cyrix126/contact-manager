@@ -21,7 +21,7 @@ use std::{
 pub use uuid;
 use uuid::Uuid;
 use vcard::{
-    filter_vcards_by_properties, properties_show_from_vcards, read_contacts, uuids_from_vcard,
+    filter_vcards_by_properties, properties_show_from_vcards, read_contacts, uuids_from_vcards,
     vcard_uuid, vcards_by_uuid, LogicalOperator,
 };
 pub use vcard_parser;
@@ -46,7 +46,7 @@ pub fn find_uids(
 ) -> Result<Vec<Uuid>, ErrorContactManager> {
     let vcards_all = read_contacts(book_name, app_name)?;
     let vcards = filter_vcards_by_properties(&vcards_all, filter_properties, forgive, lo)?;
-    Ok(uuids_from_vcard(vcards.iter().map(|v| v).collect()))
+    uuids_from_vcards(&vcards.iter().collect())
 }
 
 /// create a new address book with a name. The book will be empty.

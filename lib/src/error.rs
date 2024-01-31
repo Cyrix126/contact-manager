@@ -1,5 +1,5 @@
 use thiserror::Error;
-use vcard_parser::error::VcardError;
+use vcard_parser::{error::VcardError, vcard::Vcard};
 use xdg::BaseDirectoriesError;
 /// Errors from the API
 #[derive(Error, Debug)]
@@ -26,6 +26,8 @@ pub enum ErrorContactManager {
     Try,
     #[error("Import function can only import a file, not a directory.")]
     ImportError,
+    #[error("The UID is not present")]
+    UuidInexistant(Vcard),
 }
 
 impl From<VcardError> for ErrorContactManager {

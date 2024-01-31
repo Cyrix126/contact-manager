@@ -53,5 +53,3 @@ fn show_property(p: &Property) {
         println!("{}", p.get_value());
     }
 }
-
-// menu book

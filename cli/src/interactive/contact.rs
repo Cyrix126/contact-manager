@@ -10,7 +10,7 @@ use contact_manager_lib::{
     create_contact,
     paths::books_names,
     remove_from_book,
-    vcard::uuids_from_vcard,
+    vcard::uuids_from_vcards,
     vcard_parser::{
         constants::PropertyName,
         traits::HasValue,
@@ -23,10 +23,12 @@ use inquire::{Select, Text};
 
 use promptable::derive_more::{Deref, DerefMut};
 use promptable::promptable_derive::Promptable;
-
 #[derive(Promptable, Clone, Deref, DerefMut)]
 #[prompt(custom_prompt_display)]
 #[prompt(params = "book: &str")]
+#[prompt(
+    trigger_del = "remove_from_book(APP_SHORTNAME, book, &uuids_from_vcards(&deleted.iter().map(|d|&d.0).collect())?)?"
+)]
 pub struct Contact {
     #[promptable(function_add = "contact_add_from_or_create(book)?")]
     #[promptable(function_new = "contact_new_by_prompt(book)?")]
@@ -119,7 +121,7 @@ fn moves_in_from_book(book: &str) -> Result<Option<WrapperVcard>> {
         )
         .prompt_skippable()?
         {
-            let uuids = uuids_from_vcard(vec![&contact.vcard.0]);
+            let uuids = uuids_from_vcards(&vec![&contact.vcard.0])?;
             add_to_book(APP_SHORTNAME, book, &uuids)?;
             remove_from_book(APP_SHORTNAME, &b, &uuids)?;
             return Ok(Some(contact.vcard));
@@ -143,7 +145,7 @@ fn copy_contacts_from_book(book: &str) -> Result<Option<WrapperVcard>> {
     if let Some(contact) =
         Select::new("Select the contacts to add", contacts.0).prompt_skippable()?
     {
-        let uuids = uuids_from_vcard(vec![&contact.vcard.0]);
+        let uuids = uuids_from_vcards(&vec![&contact.vcard.0])?;
         add_to_book(APP_SHORTNAME, book, &uuids)?;
         return Ok(Some(contact.vcard));
     }

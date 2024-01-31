@@ -272,18 +272,15 @@ pub(crate) fn path_vcards(
     }
 }
 
-/// find uuid value of vcard
-pub fn uuids_from_vcard(vcards: Vec<&Vcard>) -> Vec<Uuid> {
-    vcards
-        .iter()
-        .map(|v| {
-            Uuid::try_parse(
-                &v.get_property_by_name(PropertyName::UID)
-                    .expect("UID is not present when it should")
-                    .get_value()
-                    .to_string(),
-            )
-            .expect("UID value is malformed")
-        })
-        .collect()
+/// find uuids of vcards
+pub fn uuids_from_vcards(vcards: &Vec<&Vcard>) -> Result<Vec<Uuid>, ErrorContactManager> {
+    let mut uuids = vec![];
+    for v in vcards.iter() {
+        if let Some(p) = v.get_property_by_name(PropertyName::UID) {
+            uuids.push(Uuid::parse_str(&p.get_value().to_string())?);
+        }
+        return Err(ErrorContactManager::UuidInexistant(v.to_owned().to_owned()));
+        //todo remove this ugly twice to_owned
+    }
+    Ok(uuids)
 }

@@ -4,14 +4,13 @@ use contact_manager_lib::{
     add_or_replace_property,
     api_tools::remove_parameters,
     delete_properties,
-    uuid::Uuid,
-    vcard::PROPERTY_NO_MODIFICATION_BY_USER,
+    vcard::{uuids_from_vcards, PROPERTY_NO_MODIFICATION_BY_USER},
     vcard_parser::{
         traits::{HasName, HasParameters, HasValue},
         vcard::{parameter::Parameter, property::Property},
     },
 };
-use inquire::{MultiSelect, Select, Text};
+use inquire::{required, MultiSelect, Select, Text};
 use promptable::derive_more::{Deref, DerefMut};
 use promptable::{
     basics::display::PromptableDisplay,
@@ -60,24 +59,30 @@ fn menu_properties_add(contact: &mut Contact) -> Result<()> {
     // choose a possible property to add
 
     let properties = properties_to_add(&contact.vcard);
-    let named_properties: Vec<&str> = properties.iter().map(|p| p.name()).collect();
-    let choix = Select::new("Property to add", named_properties).prompt_skippable()?;
-    if let Some(c) = choix {
-        if let Some(value) = input_value(c, None)? {
+    let suggestions: Vec<String> = properties.iter().map(|p| p.name().to_string()).collect();
+
+    let suggestor = move |val: &str| {
+        let val_lower = val.to_lowercase();
+
+        Ok(suggestions
+            .iter()
+            .filter(|s| s.to_string().to_lowercase().contains(&val_lower))
+            .map(String::from)
+            .collect())
+    };
+    if let Some(c) = Text::new("Property to add, or a new custom property:\n")
+        .with_autocomplete(suggestor)
+        .with_validator(required!())
+        .prompt_skippable()?
+    {
+        if let Some(value) = input_value(&c, None)? {
             let raw = format!("{c}:{value}\n");
             let property = &Property::create_from_str(&raw)?;
             contact.set_property(&property)?;
             add_or_replace_property(
                 APP_SHORTNAME,
                 &vec![property],
-                &vec![Uuid::parse_str(
-                    &contact
-                        .get_property_by_name("UID")
-                        .unwrap()
-                        .get_value()
-                        .to_string(),
-                )
-                .unwrap()],
+                &uuids_from_vcards(&vec![&contact])?,
             )?;
         }
     }
@@ -111,14 +116,7 @@ fn menu_properties_modify(contact: &mut Contact) -> Result<()> {
                         add_or_replace_property(
                             APP_SHORTNAME,
                             &vec![&property],
-                            &vec![Uuid::parse_str(
-                                &contact
-                                    .get_property_by_name("UID")
-                                    .unwrap()
-                                    .get_value()
-                                    .to_string(),
-                            )
-                            .unwrap()],
+                            &uuids_from_vcards(&vec![&contact])?,
                         )?;
 
                         return Ok(());
@@ -141,13 +139,7 @@ fn menu_properties_delete(contact: &mut Contact) -> Result<()> {
         delete_properties(
             APP_SHORTNAME,
             &vp.iter().map(|p| p).collect(),
-            &vec![Uuid::parse_str(
-                &contact
-                    .get_property_by_name("UID")
-                    .unwrap()
-                    .get_value()
-                    .to_string(),
-            )?],
+            &uuids_from_vcards(&vec![&contact])?,
         )?
     }
     Ok(())
