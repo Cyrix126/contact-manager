@@ -26,7 +26,7 @@ pub enum ErrorContactManager {
     Try,
     #[error("Import function can only import a file, not a directory.")]
     ImportError,
-    #[error("The UID is not present")]
+    #[error("The UID is not present, {0}")]
     UuidInexistant(Vcard),
 }
 

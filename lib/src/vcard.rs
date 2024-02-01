@@ -278,8 +278,9 @@ pub fn uuids_from_vcards(vcards: &Vec<&Vcard>) -> Result<Vec<Uuid>, ErrorContact
     for v in vcards.iter() {
         if let Some(p) = v.get_property_by_name(PropertyName::UID) {
             uuids.push(Uuid::parse_str(&p.get_value().to_string())?);
+        } else {
+            return Err(ErrorContactManager::UuidInexistant(v.to_owned().to_owned()));
         }
-        return Err(ErrorContactManager::UuidInexistant(v.to_owned().to_owned()));
         //todo remove this ugly twice to_owned
     }
     Ok(uuids)
