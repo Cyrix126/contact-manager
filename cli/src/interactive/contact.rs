@@ -27,11 +27,11 @@ use promptable::promptable_derive::Promptable;
 #[prompt(custom_prompt_display)]
 #[prompt(params = "book: &str")]
 #[prompt(
-    trigger_del = "remove_from_book(APP_SHORTNAME, book, &uuids_from_vcards(&deleted.iter().map(|d|&d.0).collect())?)?"
+    trigger_del = "remove_from_book(APP_SHORTNAME, params, &uuids_from_vcards(&deleted.iter().map(|d|&d.0).collect())?)?"
 )]
 pub struct Contact {
-    #[promptable(function_add = "contact_add_from_or_create(book)?")]
-    #[promptable(function_new = "contact_new_by_prompt(book)?")]
+    #[promptable(function_add = "contact_add_from_or_create(params)?")]
+    #[promptable(function_new = "contact_new_by_prompt(params)?")]
     #[promptable(function_mod = "contact_modify_by_prompt(field)?")]
     #[deref]
     #[deref_mut]
